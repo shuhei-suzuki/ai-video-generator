@@ -2,22 +2,22 @@
 
 macOS 26 / Apple Silicon M5 Max / 128GB を基準に、Comfy Desktop と MiniMax H3 MLX でローカルの MP4 を生成し、Ollama の Qwen を使う DeepSeek Harness のチャットからも同じワークフローを実行するための資料と Python ツールです。モデル重みは収録しません。
 
-以下の実機結果は **2026-10-12 に対象機で手作業・試作を使って確認した事実**です。このリポジトリの新しいスクリプトの実機実行は未検証です。[検証記録](doc/verification/issue-1-verification.md)の開始状態・証跡・未確認範囲を参照してください。対象外の構成や生成条件の成功を保証しません。
+実機結果とスクリプトの実行範囲は[検証記録](doc/verification/issue-1-verification.md)の開始状態・対象コミット・証跡・未確認範囲を参照してください。2026-10-12 の記録には既存環境での CLI 実行と、空の一時配置先への取得・登録が含まれます。対象外の構成や生成条件の成功を保証しません。
 
 ## 対象構成とライセンス
 
-確認日 **2026-10-12**。条件の要約は非正本です。取得する配布物の原文を優先し、本人が確認してください。「未確認」は配布条件の確認完了を意味しません。リンク先の取得・最新情報の調査はこの実装作業では行っていません。
+確認日 **2026-10-12**。条件の要約は非正本です。取得する配布物の原文を優先し、本人が確認してください。「未確認」は配布条件の確認完了を意味しません。基本モデルの `LICENSE`、INT8 の `LICENSE`、Turbo の `README.md` は、固定リビジョンの URL が応答することを 2026-10-12 に確認しました（内容の要約は非正本）。
 
 | 対象 | 固定版 / リビジョン | ライセンス原文・配布元と確認範囲 |
 | --- | --- | --- |
-| Comfy Desktop | 1.1.6 arm64（ComfyUI 0.39.2 / Python 3.13.12 / Manager V4.2.2） | [Desktop 配布元](https://github.com/Comfy-Org/desktop/releases)、[LICENSE](https://github.com/Comfy-Org/desktop/blob/main/LICENSE)・配布条件の詳細は未確認 |
+| Comfy Desktop | 1.1.6 arm64（ComfyUI 0.39.2 / Python 3.13.12 / Manager V4.2.2） | [Desktop 配布元](https://www.comfy.org/download)、[LICENSE](https://github.com/Comfy-Org/desktop/blob/main/LICENSE)・配布条件の詳細は未確認 |
 | H3 カスタムノード | `ab1756d571ebb14fed3168354dae42966a04348b` | [固定コミットの Apache-2.0 原文](https://github.com/Argus-AiTeam/ComfyUI-MiniMax-H3-MLX/blob/ab1756d571ebb14fed3168354dae42966a04348b/LICENSE) |
 | 基本モデル `MiniMaxAI/MiniMax-H3` | `42ed227ee7df40d41602854ae760620d6eb651fe` | [MiniMax H3 Community License](https://huggingface.co/MiniMaxAI/MiniMax-H3/blob/42ed227ee7df40d41602854ae760620d6eb651fe/LICENSE) |
 | INT8 `water1234/MiniMax-H3-MLX-Argus-Calibrated-INT8` | `70505b09c80e298e684d798d8e0f946937dcfad4` | [同梱 LICENSE](https://huggingface.co/water1234/MiniMax-H3-MLX-Argus-Calibrated-INT8/blob/70505b09c80e298e684d798d8e0f946937dcfad4/LICENSE)（HF 表記 other）。H3 派生物として H3 条件が及ぶ前提 |
 | Turbo `water1234/MiniMax-H3-Turbo-v4-step600-EMA-MLX` | `9771f9c606a50671bb94ee57191461602f02d1fc` | [固定モデルカード](https://huggingface.co/water1234/MiniMax-H3-Turbo-v4-step600-EMA-MLX/blob/9771f9c606a50671bb94ee57191461602f02d1fc/README.md)の apache-2.0 表記、[Apache-2.0 原文](https://www.apache.org/licenses/LICENSE-2.0)。同梱 LICENSE は一覧に無い。H3 派生物として H3 条件が及ぶ前提 |
-| Ollama 本体 | 0.33.3 | [公式配布](https://ollama.com/download/mac)、[原文](https://github.com/ollama/ollama/blob/v0.33.3/LICENSE)・配布条件の詳細は未確認 |
+| Ollama 本体 | 0.33.3 | [公式配布](https://ollama.com/download)、[原文](https://github.com/ollama/ollama/blob/v0.33.3/LICENSE)・配布条件の詳細は未確認 |
 | Qwen | `qwen3.8:27b-mlx` | [モデル配布元](https://ollama.com/library/qwen3.8)、配布モデルの `ollama show qwen3.8:27b-mlx --license` で原文を確認（Apache-2.0） |
-| DeepSeek Harness Desktop | 0.2.0-rc.2 | 公式配布の dmg の同梱 LICENSE / 利用規約を参照。配布条件の詳細は未確認。導入元は利用者が公式配布ページで確認 |
+| DeepSeek Harness Desktop | 0.2.0-rc.2 | [公式配布の条件](https://www.deepseek.com/harness)と dmg の同梱 LICENSE / 利用規約を参照。配布条件の詳細は未確認 |
 | dsh-comfyui | npm 0.5.4 | [0.5.4 配布物の MIT 原文](https://unpkg.com/dsh-comfyui@0.5.4/LICENSE)、[配布元](https://www.npmjs.com/package/dsh-comfyui/v/0.5.4) |
 | ffmpeg / ffprobe | Homebrew、対象機 ffmpeg 7.1.1 | [原文・構成による条件](https://ffmpeg.org/legal.html)、[Homebrew formula](https://formulae.brew.sh/formula/ffmpeg)。導入配布物の条件は未確認。ffprobe の版は未確認 |
 
@@ -59,7 +59,7 @@ Qwen は約18GB、Desktop のインスタンスは数GBです。導入開始時�
 | Ollama 本体 | — | 公式導入・起動 | API / 待受 |
 | Harness 本体 | — | 公式導入・初回 GUI 起動 | profile / キー / 待受 |
 | ffmpeg 本体 | — | Homebrew 導入 | 固定絶対パスの実行可否 |
-| カスタムノード | 固定コミット・新規依存・venv bin 補助リンク | ComfyUI の停止・再起動 | 4ノード |
+| カスタムノード | 固定コミット・新規依存・venv bin 補助リンク・`<comfy-root>/models/minimax_h3` へのリンク作成・共有モデルディレクトリの作成（未存在時）。既存の別実体があれば5で停止 | ComfyUI の停止・再起動 | 4ノード |
 | H3 系3モデル | 本人同意後、未取得ファイルだけ | 原文確認・本人同意 | 必須ファイル・途中データ |
 | Harness 設定例 | — | 既存項目を保持した追記・再適用 | desktop の実使用設定 |
 | Qwen | — | 手動 pull | 存在 |
@@ -71,7 +71,9 @@ Qwen は約18GB、Desktop のインスタンスは数GBです。導入開始時�
 1. 利用条件・対象構成・空き容量を確認する。Comfy Desktop 1.1.6 arm64 と Harness Desktop 0.2.0-rc.2 の公式 dmg を取得する。macOS の署名・公証（Notarized Developer ID）を確認して導入する。拒否を無効化して起動しない。Ollama 0.33.3 は公式配布から導入する。
 2. Comfy Desktop を **初回 GUI 起動**し、インスタンスのセットアップを完了する。本体・仮想環境・共有モデル・出力の実配置を確認する。ComfyUI を `127.0.0.1:8188`、Ollama を `127.0.0.1:11434` だけで起動する。Harness も初回 GUI 起動で desktop profile を用意する。Harness のポートは動的であり19387に固定しない。
 3. Homebrew を公式手順で導入済みにして、本人が `brew install ffmpeg` を実行する。`/opt/homebrew/bin/ffmpeg` と同じ場所の ffprobe を確認する。GUI 起動の ComfyUI は Homebrew を PATH に含まないことがあるため、[ワークフロー](workflows/minimax_h3_t2v_api.json)の Save 固定入力を使う。別配置なら **このファイルの ffmpeg_path だけを本人が修正**し、後で再登録する。Cellar の版番号付きパスを埋め込まない。
-4. ComfyUI を停止して固定ノードを導入する。導入は既存配布物の入れ替え計画を同版でも拒否する。dry-run と実導入は `--isolated` / 明示 PyPI / 子設定隔離を使う。既存 Git・pip 設定の接続先は使わない。既存のリンクは同じ実体なら保持し、別実体なら停止する。ノード Registry は使わない。
+4. ComfyUI を停止して固定ノードを導入する。`<comfy-root>/custom_nodes` と `main.py` が無ければ何も作らず1で停止するので、初回 GUI 起動と `--comfy-root` を確認する。導入前の `pip check` が不合格なら既存環境の不整合を先に解消する（非変更5）。導入は既存配布物の入れ替え計画を同版でも拒否する。dry-run と実導入は `--only-binary :all:` / `--isolated` / 明示 PyPI / 子設定隔離を使い、ソース配布物をビルドしない。この環境向けの wheel が無ければ計画時に非変更1で停止する。既存 Git・pip 設定の接続先は使わない。共有モデルディレクトリの作成（未存在時）と `<comfy-root>/models/minimax_h3` へのリンク作成も行う。既存のリンクは同じ実体なら保持し、既存の別実体があれば5で停止する。ノード Registry は使わない。
+
+入れ替え検出は配布名に基づくため、別名の配布物が同じファイルを提供する衝突までは検出しない。install の失敗表示は工程（事前検査 / 取得 / 計画 / 依存導入 / 事後検査 / 配置 / リンク）、仮想環境の変更状態、再実行の可否を示す。依存導入開始後は途中変更の可能性があるため、そのまま再実行せず本人が pip check・配布物差分・配置を確認する。
 
 ```sh
 ~/ComfyUI-Installs/ComfyUI/ComfyUI/.venv/bin/python -I scripts/install_h3_node.py
@@ -80,10 +82,18 @@ Qwen は約18GB、Desktop のインスタンスは数GBです。導入開始時�
 5. 原文を読んだ **本人**がモデルを取得する。`--accept-license` はライセンスを読んだ本人だけが付ける。エージェントに取得スクリプトを実行させない。フラグを省くと TTY で `yes` を求める。非TTY・EOF・拒否では取得しない。完了済みなら同意・容量要求・hub 読込なしで0。途中・不一致は自動 resume / repair / force せず本人が退避する。一覧外の通常ファイルは保持する。並列取得しない。
 
 ```sh
-~/ComfyUI-Installs/ComfyUI/ComfyUI/.venv/bin/python -I scripts/download_h3_models.py --accept-license
-# 部分選択・別配置の例（本人の同意が必要）
-~/ComfyUI-Installs/ComfyUI/ComfyUI/.venv/bin/python -I scripts/download_h3_models.py --models turbo --models-dir ~/ComfyUI-Shared/models/minimax_h3 --accept-license
+~/ComfyUI-Installs/ComfyUI/ComfyUI/.venv/bin/python -I scripts/download_h3_models.py
+# 原文を読んだ本人が端末で yes と入力する。部分選択も同様
+~/ComfyUI-Installs/ComfyUI/ComfyUI/.venv/bin/python -I scripts/download_h3_models.py --models turbo --models-dir ~/ComfyUI-Shared/models/minimax_h3
 ```
+
+原文を読んだ本人が、非対話で実行したいときの変形だけに `--accept-license` を使います。
+
+```sh
+~/ComfyUI-Installs/ComfyUI/ComfyUI/.venv/bin/python -I scripts/download_h3_models.py --accept-license
+```
+
+モデル状態はモデルごとの「完了 N / 全 M 件」と未完了ファイルだけを表示します。全件は download / check_env / make_manifest の `--verbose` で表示できます。取得中は1ファイル1行の進捗、容量は開始時と値が変わったときに表示します（容量検査自体は毎回行います）。
 
 ComfyUI venv の既存 huggingface_hub>=1.0 が必要なのは取得時だけです（対象機1.30.0）。`token=False`、固定 endpoint/revision と標準転送を使い、暗黙のトークンを送らない設定です。存在・サイズ照合は同サイズ改変の暗号学的な完全性保証ではありません。
 
@@ -101,7 +111,9 @@ dsh plugin --profile desktop allow-version dsh-comfyui@0.5.4 --dsh-version 0.2.0
 dsh plugin --profile desktop add dsh-comfyui@0.5.4
 ```
 
-8. Harness を終了した状態でライブラリへ登録する。起動中は警告して続行するが同時更新は保証しない。登録先は profile の外。既存同名の workflow 全体と parameters（parameter id 除外）が一致すればバイト不変0、異なれば原本保持5。競合は Harness の ComfyUI パネルで既存項目を削除してから登録し直す。
+8. Harness を終了した状態でライブラリへ登録する。起動中は警告して続行するが同時更新は保証しない。登録先は profile の外。既存同名の workflow 全体・parameters（parameter id 除外）・description・tags が今回登録する内容と一致すればバイト不変0、異なれば原本保持5。競合は Harness の ComfyUI パネルで既存項目を削除してから登録し直す。
+
+ライブラリの既定値は prompt がワークフローの値、768×448・5秒・steps=9・seed=0（random）です。保存する workflow はリポジトリのグラフそのままで、グラフと直接 submit の既定値は64×64・1秒・steps=5のスモーク条件です。「同じワークフロー」は公開6項目を除いた固定入力の一致で判定します。description は英語で実行ツール・同期モード・条件・所要時間・期限・保存先をエージェントへ案内します。
 
 ```sh
 ~/ComfyUI-Installs/ComfyUI/ComfyUI/.venv/bin/python -I scripts/register_dsh_workflow.py
@@ -132,13 +144,17 @@ dsh plugin --profile desktop add dsh-comfyui@0.5.4
 
 プロンプトは非空、幅・高さは正の32倍数、秒数は正の有限数、steps は2以上の整数、seed は非負整数です。上限は設けませんが大きい値は時間・メモリ・容量を増やします。生成全体の既定期限は **7200秒**、HTTP は30秒、poll は2秒、動画検査各300秒（`--timeout` / `--http-timeout` / `--poll-interval` / `--command-timeout`）。期限超過でサーバーの生成を止めたり再投入したりしません。
 
-チャットの指示例：
+チャットの指示例（実機成功条件。スモークの英語プロンプトはセッション記録の値、長い2条件の英語プロンプトは例）：
 
-> 登録ワークフロー minimax-h3-t2v をライブラリから取得し、その id を使って comfyui_workflow action=run で同期実行してください。prompt は「A red panda in a misty bamboo forest, with rustling bamboo and footsteps」、width=64、height=64、duration_seconds=1、steps=5。mode=sync、timeout_ms=900000。モデルパス・ffmpeg_path・保存先は変更しないでください。完了後に prompt_id と保存先を示してください。
+> 登録ワークフロー minimax-h3-t2v をライブラリから取得し、その id と parameters を comfyui_workflow action=run に渡して同期実行してください。prompt は「A golden retriever puppy running on a sunny beach, waves crashing softly」、width=64、height=64、duration_seconds=1、steps=5。mode=sync、timeout_ms=900000。同時に1本だけ、モデルパス・ffmpeg_path は変更せず、完了後に prompt_id と保存先を示してください。
 
-公開項目は prompt / width / height / duration_seconds / steps / seed の6つだけです。seed 省略はプラグインでランダム化します。検証した呼出しは `comfyui_workflow`、`action: run`、ライブラリ id、parameters の5項目、`mode: sync`、`timeout_ms: 900000` です。**同期チャットは15分でタイムアウト**し、長い動画はチャット側が先に終了しうる一方 ComfyUI は生成を継続します。長い生成の指示にはこの期限を明記し、再投入せず出力ディレクトリまたは実行履歴で完了を確認してください。async は未検証です。
+> minimax-h3-t2v のライブラリ id と parameters を comfyui_workflow action=run に渡して mode=sync で生成してください。prompt は「A red panda in a misty bamboo forest, with rustling bamboo and footsteps」、width=768、height=448、duration_seconds=5、steps=9。タイムアウトは30分（timeout_ms は1800000）で。同時に1本だけ、モデルパス・ffmpeg_path は変更せず、prompt_id と保存先を示してください。
 
-verify は履歴を登録項目とリポジトリの両方へ直接照合します。構成・固定入力が片方でも異なれば外部コマンドを起動せず8です。公開6項目は履歴値を表示し、値差だけは不合格にしません。検査実行物は常にリポジトリの Save 固定入力の ffmpeg と同じ場所の ffprobe です。Save 出力の filename/subfolder/type から通常の MP4 を解決し、H.264 映像・AAC 音声・要求解像度・エラー無しの全フレームデコードを確認します。stdout の文字列だけは保存先と見なしません。`open` やファイルマネージャーから本人が MP4 を再生してください。
+> minimax-h3-t2v のライブラリ id と parameters を comfyui_workflow action=run に渡して mode=sync で生成してください。prompt は「A waterfall in a green forest, rushing water and birds singing」、width=448、height=768、duration_seconds=15、steps=9。タイムアウトは 70 分（timeout_ms は 4200000）で。同時に1本だけ、モデルパス・ffmpeg_path は変更せず、prompt_id と保存先を示してください。
+
+公開項目は prompt / width / height / duration_seconds / steps / seed の6つだけです。プロンプトは英語で場面と音を書き、width / height は32の倍数、検証済みサイズは768×448（横）と448×768（縦）、秒数は15までを運用目安にします。保存先は ComfyUI の出力ディレクトリの `minimax_h3/` です。seed 省略はプラグインでランダム化します。検証した呼出しは `comfyui_workflow`、`action: run`、ライブラリ id、parameters の5項目、`mode: sync`、`timeout_ms: 900000` です。**既定の同期チャット期限は15分**で、長い動画はチャット側が先に終了しうる一方 ComfyUI は生成を継続します。長い生成には5秒なら1800000、15秒なら4200000を明示し、再投入せず出力ディレクトリまたは実行履歴で完了を確認してください。async とリポジトリ版の登録項目によるチャット生成は未検証です（理由は検証記録）。
+
+verify は履歴を登録項目とリポジトリの両方へ直接照合し、照合相手（リポジトリのワークフロー・登録 id または登録項目なし）を表示します。履歴に ID が無ければ待たずに2です（ComfyUI の再起動で履歴は消えます）。履歴の公開値の型が不正ならその原因を表示して8です。構成・固定入力が片方でも異なれば外部コマンドを起動せず8です。公開6項目は履歴値を表示し、値差だけは不合格にしません。検査実行物は常にリポジトリの Save 固定入力の ffmpeg と同じ場所の ffprobe です。Save 出力の filename/subfolder/type から通常の MP4 を解決し、H.264 映像・AAC 音声・要求解像度・エラー無しの全フレームデコードを確認します。stdout の文字列だけは保存先と見なしません。`open` やファイルマネージャーから本人が MP4 を再生してください。
 
 ## 生成時間とメモリの指針
 
@@ -157,7 +173,7 @@ INT8 Transformer 約38GB、テキストエンコーダ約67GBはストリーミ�
 
 ## トラブルシュート
 
-各行は `D-n PASS/FAIL/UNKNOWN: 原因; 対処`。UNKNOWN も全体終了1です。診断は修復しません。
+PASS 行は `D-n PASS: 原因`、FAIL / UNKNOWN 行は `D-n 状態: 原因; 対処`。UNKNOWN も全体終了1です。診断は修復しません。
 
 | 項目・原因 | 本人が行う対処 |
 | --- | --- |
@@ -187,7 +203,7 @@ INT8 Transformer 約38GB、テキストエンコーダ約67GBはストリーミ�
 
 認証不要の ComfyUI / Ollama / Harness API を **外部公開しない**。ComfyUI を CORS 許可や `--listen` 付きで起動しない。ループバックだけで運用するローカル単一利用者向けです。
 
-`MiniMaxH3SaveVideo.ffmpeg_path` は任意の実行ファイルを受け取れます。モデルパス・ffmpeg_path・保存先を公開6項目に含めない約束は、プラグインの `comfyui_run` による任意グラフ投入を遮断しません。ツール承認・無効化は未調査で、任意投入を許可する残余リスクは利用者判断です。外部サイトの文章や第三者のファイルなど **信頼できない入力をそのままエージェントに実行させない**でください。
+`MiniMaxH3SaveVideo.ffmpeg_path` は任意の実行ファイルを受け取れます。モデルパス・ffmpeg_path・保存先を公開6項目に含めない約束は、プラグインの `comfyui_run` による任意グラフ投入を遮断しません。悪意のある Web ページがブラウザ経由でループバックの ComfyUI API に要求を送る経路は CORS 許可付きの起動で成立しやすくなり、CORS 設定は診断の対象外です。ツール承認・無効化は未調査で、任意投入を許可する残余リスクは利用者判断です。外部サイトの文章や第三者のファイルなど **信頼できない入力をそのままエージェントに実行させない**でください。
 
 固定ノード・プラグインの事前確認の観点と未確認範囲は[記録](doc/verification/issue-1-verification.md)にあります。依存パッケージの中身は未確認で、全面的な安全性保証ではありません。モデル配下のリンク・逸脱を拒否し、コマンドは引数リストと最小子環境を使います。単一利用者の同時ディレクトリ差替えは運用外です。秘密・重み・個人の絶対パスを公開しないでください。公開ログのホームは `~` に置換し、実データの照合は置換前に行います。
 
@@ -195,4 +211,4 @@ INT8 Transformer 約38GB、テキストエンコーダ約67GBはストリーミ�
 python3 -m unittest discover -s tests -v
 ```
 
-標準ライブラリの unittest / tempfile / mock でネットワーク・実サービス・GPU なしの検証を行います。PyYAML が無い場合は該当 YAML テストを理由付きでスキップし、実機合格には数えません。hub のインターフェースはスタブで検証します。実機の導入・Turbo 再実行・D 全正常・生成・チャット後再登録・利用者設定隔離の確認は orchestrator が別途実施します。
+標準ライブラリの unittest / tempfile / mock でネットワーク・実サービス・GPU なしの検証を行います。PyYAML が無い場合は該当 YAML テストを理由付きでスキップし、実機合格には数えません。hub のインターフェースはスタブで検証します。実機結果は検証記録の LIVE レコードを参照してください。今回の修正差分の実機再実行・独立再レビューは orchestrator が別途実施します。

@@ -22,7 +22,7 @@ def history_graph(entry):
         c.fail(8, '履歴', '実投入グラフが不明', '同じ ComfyUI 起動中の履歴を確認')
 
 
-def wait_history(base, prompt_id, deadline, http_timeout, poll):
+def wait_history(base, prompt_id, deadline, http_timeout, poll, require_present=False):
     while True:
         remaining = deadline - time.monotonic()
         if remaining <= 0:
@@ -37,6 +37,8 @@ def wait_history(base, prompt_id, deadline, http_timeout, poll):
         if not isinstance(response, dict):
             c.fail(6, '履歴', '応答構造不正', 'API を確認')
         entry = response.get(prompt_id)
+        if entry is None and require_present:
+            c.fail(2, '履歴', '履歴に無い ID。ComfyUI の再起動で履歴は消える', '同じ起動中の prompt_id を確認')
         if entry is not None:
             if not isinstance(entry, dict) or not isinstance(entry.get('status'), dict):
                 c.fail(6, '履歴', '状態構造不正', '履歴を確認')
@@ -52,6 +54,10 @@ def wait_history(base, prompt_id, deadline, http_timeout, poll):
 
 def verify_entry(entry, repository, registered, output_dir, command_timeout, submitted=None):
     actual = history_graph(entry)
+    try:
+        values = c.validate_public({k: actual['2']['inputs'].get(k) for k in c.PUBLIC})
+    except (c.H3Error, KeyError, TypeError, AttributeError):
+        c.fail(8, '履歴照合', '履歴の公開値の型が不正', '履歴の公開6項目を確認。外部コマンドは起動しない')
     # Both comparisons happen before output inspection or ANY external execution.
     c.compare_graph(actual, repository)
     if registered is not None:
@@ -62,7 +68,8 @@ def verify_entry(entry, repository, registered, output_dir, command_timeout, sub
             c.fail(8, '履歴照合', '直接投入の公開値が不一致', '対象 prompt_id を確認')
     values = {k: actual['2']['inputs'][k] for k in c.PUBLIC}
     print(c.display('履歴公開6項目: ' + c.json.dumps(values, ensure_ascii=False)))
-    print('履歴照合 PASS: ノード構成・固定入力')
+    other = '登録項目 id=' + c.json.dumps(registered.get('id'), ensure_ascii=True) if registered is not None else '登録項目なし'
+    print('履歴照合 PASS: ノード構成・固定入力 / リポジトリのワークフロー / ' + other)
     video = c.output_video(entry, output_dir)
     print(c.display(f'保存先（存在確認済み）: {video}'))
     # Never derive executables from the library or history.
@@ -97,7 +104,8 @@ def submit(args):
     if not isinstance(prompt_id, str) or not re.fullmatch(r'[A-Za-z0-9_-]+', prompt_id):
         c.fail(2 if args.verify_history else 6, 'prompt_id', 'ID 形式不正')
     print('prompt_id=' + prompt_id, flush=True)
-    entry = wait_history(base, prompt_id, deadline, args.http_timeout, args.poll_interval)
+    entry = wait_history(base, prompt_id, deadline, args.http_timeout, args.poll_interval,
+                         require_present=bool(args.verify_history))
     print(f'完了までの経過時間: {time.monotonic() - started:.1f} 秒（キャッシュの可能性あり）')
     return verify_entry(entry, graph, registered, p['output_dir'], args.command_timeout, submitted)
 

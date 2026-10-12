@@ -44,6 +44,9 @@ class Case(unittest.TestCase):
         self.tmp = tempfile.TemporaryDirectory(prefix='h3-test-')
         self.addCleanup(self.tmp.cleanup)
         self.root = Path(self.tmp.name)
+        home = self.root / 'home'
+        home.mkdir()
+        self.enterContext(mock.patch.object(Path, 'home', return_value=home))
         self.output = io.StringIO()
         self.error = io.StringIO()
         self.enterContext(contextlib.redirect_stdout(self.output))

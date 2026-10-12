@@ -31,7 +31,7 @@ def consent(accepted):
     c.fail(3, '同意', '未同意', '原文を読んだ本人が yes または --accept-license を指定')
 
 
-def capacity(root, remaining, limit):
+def capacity(root, remaining, limit, previous=None):
     existing = root.resolve()
     while not existing.exists():
         existing = existing.parent
@@ -39,10 +39,13 @@ def capacity(root, remaining, limit):
     free = real if limit is None else min(real, limit)
     margin = max(1024 ** 3, (remaining + 19) // 20)
     needed = remaining + margin
-    print(f'容量: R={remaining} 余裕={margin} 必要={needed} 実測free={real} 有効free={free} N={limit} bytes')
-    print(f'必要={needed / 1e9:.3f} GB / {needed / 1024**3:.3f} GiB')
+    current = (remaining, margin, needed, real, free, limit)
+    if current != previous:
+        print(f'容量: R={remaining} 余裕={margin} 必要={needed} 実測free={real} 有効free={free} N={limit} bytes')
+        print(f'必要={needed / 1e9:.3f} GB / {needed / 1024**3:.3f} GiB')
     if free < needed:
         c.fail(4, '容量', '配置先ボリュームの空き不足', '不要なデータを本人が退避。Qwen/キャッシュ/生成物分も確保')
+    return current
 
 
 def hub_client():
@@ -70,7 +73,7 @@ def acquire(args):
     models = [m for m in c.validate_manifest(c.read_json(p['manifest'])) if m['key'] in args.models]
     print(c.display(f'配置先: {root}'))
     rows = c.inspect_models(root, models)
-    c.model_summary(rows)
+    c.model_summary(rows, args.verbose)
     if any(state not in ('未取得', '完了') for _, _, state in rows):
         c.fail(5, 'モデル', '取得途中・サイズ不一致・不正データ', c.REPAIR)
     pending = [(m, f) for m, f, state in rows if state == '未取得']
@@ -79,11 +82,11 @@ def acquire(args):
         return 0
     consent(args.accept_license)
     remaining = sum(f['size'] for _, f in pending)
-    capacity(root, remaining, args.test_free_bytes)
+    previous = capacity(root, remaining, args.test_free_bytes)
     download = hub_client()
     root.mkdir(parents=True, exist_ok=True)
-    capacity(root, remaining, args.test_free_bytes)
-    for m, f in pending:
+    previous = capacity(root, remaining, args.test_free_bytes, previous)
+    for index, (m, f) in enumerate(pending, 1):
         current = c.inspect_models(root, models)
         if any(s not in ('未取得', '完了') for _, _, s in current):
             c.fail(5, 'モデル', '取得直前に状態変化', c.REPAIR)
@@ -91,15 +94,16 @@ def acquire(args):
         remaining = sum(ff['size'] for _, ff, s in current if s == '未取得')
         if state == '完了':
             continue
-        capacity(root, remaining, args.test_free_bytes)
+        previous = capacity(root, remaining, args.test_free_bytes, previous)
         c.safe_model_path(root, m['local_dir'] + '/' + f['path'])
+        print(f"取得 {index}/{len(pending)}: {m['local_dir']}/{f['path']}（{f['size']} bytes）", flush=True)
         try:
             download(repo_id=m['repo'], filename=f['path'], revision=m['revision'],
                      local_dir=str(root / m['local_dir']), token=False)
         except Exception:
             c.fail(6, '取得', '標準 hub 転送に失敗（途中データを保持）', c.REPAIR)
     final = c.inspect_models(root, models)
-    c.model_summary(final)
+    c.model_summary(final, args.verbose)
     if any(s != '完了' for _, _, s in final):
         c.fail(6, '取得', '取得後のサイズ照合に失敗', c.REPAIR)
     return 0
@@ -111,6 +115,7 @@ def main():
     parser.add_argument('--models', nargs='+', choices=('base', 'int8', 'turbo'), default=['base', 'int8', 'turbo'])
     parser.add_argument('--accept-license', action='store_true', help='原文を読んだ本人の同意。エージェントは使用しない')
     parser.add_argument('--test-free-bytes', type=c.nonnegative, help='有効free=min(実測,N)。容量不足の再現用')
+    parser.add_argument('--verbose', action='store_true', help='完了済みモデルも全件表示')
     return acquire(c.parse(parser))
 
 

@@ -225,7 +225,7 @@ class CheckTests(Case):
         args = argparse.Namespace(comfy_url='http://127.0.0.1:9000', ollama_url='http://127.0.0.1:9100/v1',
                                   http_timeout=5, profile_dir=str(self.root), env_file=str(self.root / '.env'),
                                   ps=str(exec_file(self.root / 'ps')), lsof=str(exec_file(self.root / 'lsof')),
-                                  harness_process='DeepSeek Harness')
+                                  harness_process='DeepSeek Harness', verbose=True)
         def response(url, **kwargs):
             if url.endswith('/system_stats'):
                 return dict(system={}, devices=[])
@@ -236,6 +236,7 @@ class CheckTests(Case):
         normal = ('PASS', 'fixture', 'keep')
         with mock.patch.object(c, 'request_json', side_effect=response), mock.patch.object(e, 'model_diagnostic', return_value=normal), mock.patch.object(e, 'ffmpeg_diagnostic', return_value=normal), mock.patch.object(e, 'profile_diagnostic', return_value=normal), mock.patch.object(e, 'plugin_diagnostic', return_value=normal), mock.patch.object(e, 'process_table', return_value={1: (0, 1, 'DeepSeek Harness')}), mock.patch.object(e, 'port_diagnostic', return_value=normal), mock.patch.object(e, 'harness_diagnostic', return_value=normal):
             self.assertEqual(e.diagnose(args), 0)
+            self.assertIs(e.model_diagnostic.call_args.args[0]['verbose'], True)
             cases = [('/system_stats', {}), ('/api/tags', {'models': []})] + [('/object_info/' + name, {}) for name in c.NODES]
             for suffix, result in cases:
                 def bad(url, **kwargs):

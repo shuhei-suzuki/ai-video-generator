@@ -17,7 +17,8 @@ class RegisterTests(Case):
 
     def entry(self):
         graph = c.load_graph()
-        return dict(id=str(uuid.uuid4()), name=c.NAME, workflow=graph, parameters=c.parameters(graph), unknown='keep')
+        return dict(id=str(uuid.uuid4()), name=c.NAME, workflow=graph, parameters=c.parameters(graph),
+                    description=r.DESCRIPTION, tags=r.TAGS, unknown='keep')
 
     def test_add_uuid4_preserve_unknown_and_warning(self):
         args = self.args()
@@ -60,7 +61,7 @@ class RegisterTests(Case):
             if kind == 'fixed':
                 entry['workflow']['1']['inputs']['memory_limit_gb'] = 64
             elif kind == 'default':
-                entry['parameters'][1]['default'] = 768
+                entry['parameters'][1]['default'] = 64
             elif kind == 'extra_parameter':
                 entry['parameters'].append(dict(name='ffmpeg_path'))
             else:

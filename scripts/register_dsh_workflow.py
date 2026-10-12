@@ -11,6 +11,22 @@ _spec = importlib.util.spec_from_file_location('h3_common', Path(__file__).with_
 c = importlib.util.module_from_spec(_spec)
 _spec.loader.exec_module(c)
 
+DESCRIPTION = (
+    'MiniMax H3 text-to-video with stereo audio, MLX on Apple Silicon. '
+    'Use comfyui_workflow with action: run, this library id and parameters; use mode: sync. '
+    'Async is unverified in this configuration. Write the prompt in English, describing the scene and sounds. '
+    'Width and height must be multiples of 32; verified sizes are 768x448 (landscape) and 448x768 (portrait). '
+    'Use duration_seconds up to 15. Defaults: 768x448, 5 seconds, steps 9, seed 0 (random). '
+    'Approximate generation times: 768x448 / 5 seconds takes 10-14 minutes; '
+    '448x768 / 15 seconds takes 48 minutes; 64x64 / 1 second / steps 5 takes about 1 minute. '
+    'Set timeout_ms longer than generation: 1800000 for 5 seconds, 4200000 for 15 seconds. '
+    'The default 900000 may time out the chat before a long generation finishes; '
+    'ComfyUI continues generating, so do not resubmit. Run only one generation at a time. '
+    'Videos are saved under minimax_h3/ in the ComfyUI output directory. '
+    'Do not change model paths or ffmpeg_path.'
+)
+TAGS = ['video', 'minimax-h3']
+
 
 def differences(old, new, prefix=''):
     if isinstance(old, dict) and isinstance(new, dict):
@@ -46,6 +62,8 @@ def register(args):
         except c.H3Error:
             oldparams = None
         changes = differences(match['workflow'], graph, 'workflow')
+        changes.extend(differences(match.get('description'), DESCRIPTION, 'description'))
+        changes.extend(differences(match.get('tags'), TAGS, 'tags'))
         if oldparams != c.parameter_contract(newparams):
             if isinstance(match.get('parameters'), list):
                 for i, p in enumerate(match['parameters']):
@@ -56,17 +74,17 @@ def register(args):
                                                    'parameters/' + str(i)))
             changes.append('parameters')
         if changes:
-            print('差分所在: ' + ', '.join(changes))
+            print('差分所在: ' + c.json.dumps(changes, ensure_ascii=True))
             c.fail(5, '登録', '同名別内容（原本保持）', c.REREGISTER)
-        print(f'{c.NAME}: 変更なし id={match["id"]}')
+        print(f'{c.NAME}: 変更なし id=' + c.json.dumps(match['id'], ensure_ascii=True))
         return 0
     ps = c.executable(args.ps, search=True, item='ps')
     process = c.command([ps, '-axo', 'comm='], timeout=30).stdout
     if any(Path(line.strip()).name == args.harness_process for line in process.splitlines()):
         print('警告: Harness 起動中。同時更新は保証しない。終了してからの登録を推奨', file=sys.stderr)
     entry = dict(id=str(uuid.uuid4()), name=c.NAME,
-                 description='MiniMax H3 video + audio. Scene and sound prompt; sync mode. Only the six public parameters are adjustable. One generation at a time.',
-                 workflow=graph, parameters=newparams, tags=['video', 'minimax-h3'],
+                 description=DESCRIPTION,
+                 workflow=graph, parameters=newparams, tags=TAGS,
                  updatedAt=datetime.now(timezone.utc).isoformat().replace('+00:00', 'Z'))
     entries.append(entry)
     mode = stat.S_IMODE(snapshot[0].st_mode) if snapshot else 0o600

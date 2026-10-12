@@ -64,6 +64,7 @@ class InstallTests(Case):
         graph['3']['inputs']['ffmpeg_path'] = str(ffmpeg)
         target = core / 'custom_nodes' / c.NODE_DIR
         target.mkdir(parents=True)
+        (core / 'main.py').write_text('fixture')
         (target / 'requirements.txt').write_text('new_pkg>=1\n')
         (target / 'untracked.txt').write_text('keep')
         return argparse.Namespace(comfy_root=str(core), venv=str(venv), models_dir=str(self.root / 'shared'),
@@ -106,10 +107,13 @@ class InstallTests(Case):
             self.assertFalse(kw['shell'])
             if 'install' in argv:
                 self.assertEqual(argv[argv.index('--index-url') + 1], 'https://pypi.org/simple')
+                self.assertEqual(argv[argv.index('--only-binary') + 1], ':all:')
         for argv, kw in calls:
             if argv[0] == args.git:
                 self.assertEqual(kw['env']['GIT_CONFIG_GLOBAL'], os.devnull)
                 self.assertEqual(kw['env']['GIT_CONFIG_NOSYSTEM'], '1')
+                self.assertEqual(kw['env']['GIT_TERMINAL_PROMPT'], '0')
+            self.assertEqual(kw['stdin'], c.subprocess.DEVNULL)
 
     def test_install_existing_plan_nonchange(self):
         args, graph, target = self.setup_install()

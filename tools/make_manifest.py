@@ -47,7 +47,7 @@ def make(args):
     models = c.validate_manifest(result)
     if args.compare_dir:
         rows = c.inspect_models(Path(args.compare_dir).expanduser(), models)
-        c.model_summary(rows)
+        c.model_summary(rows, args.verbose)
         if any(s != '完了' for _, _, s in rows):
             c.fail(1, '一覧照合', '全件一致せず（出力非変更）', '配置・サイズを確認')
     c.atomic_json(output, result, snapshot)
@@ -60,6 +60,7 @@ def main():
     parser.add_argument('--output', default=str(c.MANIFEST), help='既定: リポジトリ config の一覧')
     parser.add_argument('--compare-dir', help='任意: ローカル models/minimax_h3 の全件照合')
     parser.add_argument('--http-timeout', type=c.positive, default=30)
+    parser.add_argument('--verbose', action='store_true', help='照合で完了済みモデルも全件表示')
     return make(c.parse(parser))
 
 

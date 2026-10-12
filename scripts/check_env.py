@@ -28,9 +28,9 @@ def guarded(fn, unknown=False):
 def model_diagnostic(p):
     models = c.validate_manifest(c.read_json(p['manifest']))
     rows = c.inspect_models(p['models_dir'], models)
-    c.model_summary(rows)
+    c.model_summary(rows, p.get('verbose', False))
     entrance = p['comfy_root'] / 'models/minimax_h3'
-    same = entrance.is_dir() and entrance.resolve() == p['models_dir'].resolve()
+    same = entrance.is_dir() and c.entity_relative(entrance, p['models_dir']) == ()
     good = all(s == '完了' for _, _, s in rows)
     return status(same and good,
                   ('全必須ファイル一致' if good else '欠落・途中・サイズ不一致') + (' / 入口一致' if same else ' / 入口不在・別実体'),
@@ -229,7 +229,7 @@ def listeners(lsof, pids=None, port=None):
     c.executable(lsof)
     try:
         result = c.subprocess.run([str(a) for a in argv], shell=False, env=c.child_env(),
-                                  capture_output=True, text=True, timeout=30)
+                                  stdin=c.subprocess.DEVNULL, capture_output=True, text=True, timeout=30)
     except (OSError, c.subprocess.TimeoutExpired):
         c.fail(1, 'lsof', '待受確認不能', 'プロセス・権限を確認')
     if result.returncode not in (0, 1) or result.stderr.strip() or (result.returncode == 1 and result.stdout):
@@ -286,7 +286,8 @@ def harness_diagnostic(name, table, lsof):
 
 def aggregate(results):
     for i, (state, cause, remedy) in enumerate(results, 1):
-        print(c.display(f'D-{i} {state}: {cause}; 対処: {remedy}'))
+        suffix = '' if state == 'PASS' else f'; 対処: {remedy}'
+        print(c.display(f'D-{i} {state}: {cause}' + suffix))
     return 0 if all(state == 'PASS' for state, _, _ in results) else 1
 
 
@@ -294,6 +295,7 @@ def diagnose(args):
     comfy = c.local_url(args.comfy_url)
     ollama = c.local_url(args.ollama_url, ollama=True)
     p = c.paths(args)
+    p['verbose'] = args.verbose
     profile, env_file = Path(args.profile_dir).expanduser(), Path(args.env_file).expanduser()
     def system():
         result = c.request_json(comfy + '/system_stats', timeout=args.http_timeout)
@@ -341,6 +343,7 @@ def main():
     parser.add_argument('--lsof', default='lsof', help='PATH から絶対パス解決')
     parser.add_argument('--ps', default='ps', help='PATH から絶対パス解決')
     parser.add_argument('--http-timeout', type=c.positive, default=5)
+    parser.add_argument('--verbose', action='store_true', help='完了済みモデルも全件表示')
     return diagnose(c.parse(parser))
 
 

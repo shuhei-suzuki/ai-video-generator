@@ -127,17 +127,52 @@ def paths(args):
                 data_dir=chosen('data_dir', Path.home() / '.dsh/data/dsh-comfyui'))
 
 
+def existing_ancestor(path):
+    """Keep missing components while resolving existing symlink aliases."""
+    cursor = Path(path).resolve()
+    tail = []
+    while True:
+        try:
+            info = cursor.stat()
+            return cursor, info, tuple(reversed(tail))
+        except FileNotFoundError:
+            if cursor == cursor.parent:
+                raise
+            tail.append(cursor.name)
+            cursor = cursor.parent
+
+
+def entity_relative(path, root):
+    """Containment by device/inode, including mount and case aliases.
+
+    Walk the candidate's ancestors, never the protected root's ancestors.
+    Missing root components use casefold as a conservative write boundary.
+    """
+    anchor, rootstat, missing = existing_ancestor(root)
+    cursor, info, tail = existing_ancestor(path)
+    parts = list(tail)
+    while True:
+        if os.path.samestat(info, rootstat):
+            if tuple(p.casefold() for p in parts[:len(missing)]) == tuple(p.casefold() for p in missing):
+                return tuple(parts[len(missing):])
+            return None
+        if cursor == cursor.parent:
+            return None
+        parts.insert(0, cursor.name)
+        cursor = cursor.parent
+        info = cursor.stat()
+
+
 def inside(path, root):
-    return path.resolve().is_relative_to(root.resolve())
+    return entity_relative(path, root) is not None
 
 
 def writable(path, library=False):
     """Protect Harness configuration, including aliases resolving into it."""
-    actual = path.resolve()
-    home = (Path.home() / '.dsh').resolve()
+    home = Path.home() / '.dsh'
     allowed = home / 'data/dsh-comfyui'
-    if actual.is_relative_to(home):
-        if not library or actual not in (allowed, allowed / 'workflows.json'):
+    if inside(path, home):
+        if not library or not any(entity_relative(path, p) == () for p in (allowed, allowed / 'workflows.json')):
             fail(2, '書込先', '~/.dsh の許可範囲外', '設定は本人が手で追記')
 
 
@@ -259,9 +294,14 @@ def inspect_models(root, models):
     return result
 
 
-def model_summary(rows):
+def model_summary(rows, verbose=False):
+    for key in dict.fromkeys(m['key'] for m, _, _ in rows):
+        group = [s for m, _, s in rows if m['key'] == key]
+        model = next(m for m, _, _ in rows if m['key'] == key)
+        print(f'{key}: 完了 {group.count("完了")} / 全 {len(model["files"])} 件')
     for model, item, state in rows:
-        print(display(f"{model['key']} {model['revision']} {item['path']} {item['size']} bytes: {state}"))
+        if verbose or state != '完了':
+            print(display(f"{model['key']} {model['revision']} {item['path']} {item['size']} bytes: {state}"))
 
 
 def executable(value, search=False, item='実行ファイル'):
@@ -283,7 +323,7 @@ def child_env(kind=None):
     if kind == 'pip':
         env['PIP_CONFIG_FILE'] = os.devnull
     if kind == 'git':
-        env.update(GIT_CONFIG_GLOBAL=os.devnull, GIT_CONFIG_NOSYSTEM='1')
+        env.update(GIT_CONFIG_GLOBAL=os.devnull, GIT_CONFIG_NOSYSTEM='1', GIT_TERMINAL_PROMPT='0')
     if kind == 'hub':
         env.update(HF_ENDPOINT='https://huggingface.co', HF_HUB_DISABLE_IMPLICIT_TOKEN='1')
     return env
@@ -293,7 +333,7 @@ def command(argv, timeout=1800, kind=None, cwd=None, code=6):
     executable(argv[0])
     try:
         result = subprocess.run([str(v) for v in argv], shell=False, env=child_env(kind),
-                                cwd=cwd, capture_output=True, text=True, timeout=timeout)
+                                cwd=cwd, stdin=subprocess.DEVNULL, capture_output=True, text=True, timeout=timeout)
     except subprocess.TimeoutExpired:
         fail(7, kind or '外部処理', '期限超過',
              'pip は変更が途中の可能性あり。本人が pip check を確認' if kind == 'pip' else '期限・状態を確認')
@@ -407,7 +447,7 @@ def compare_graph(actual, expected):
 
 
 def parameters(graph):
-    defaults = graph['2']['inputs']
+    defaults = dict(graph['2']['inputs'], width=768, height=448, duration_seconds=5.0, steps=9, seed=0)
     result = []
     labels = ('Prompt', 'Width', 'Height', 'Duration (s)', 'Steps', 'Seed')
     for name, label in zip(PUBLIC, labels):
@@ -535,7 +575,7 @@ def inspect_video(path, width, height, graph, timeout=300):
             raise ValueError
     except (KeyError, TypeError, ValueError, StopIteration, AttributeError, H3Error):
         fail(8, '動画', 'H.264/AAC 両ストリームまたは解像度が不合格', '動画と要求解像度を確認')
-    decoded = command([ffmpeg, '-v', 'error', '-xerror', '-i', path, '-map', '0:v:0',
+    decoded = command([ffmpeg, '-nostdin', '-v', 'error', '-xerror', '-i', path, '-map', '0:v:0',
                        '-map', '0:a:0', '-f', 'null', '-'], timeout=timeout, code=8)
     if decoded.stderr.strip():
         fail(8, '動画', '全フレームデコードにエラー', '動画を確認')

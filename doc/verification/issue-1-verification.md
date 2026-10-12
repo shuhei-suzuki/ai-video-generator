@@ -2,7 +2,7 @@
 
 ## 読み方・対応
 
-要件は [要件書](../requirements/issue-1-requirements.md)、決定は [設計書](../design/issue-1-design.md)、現在の契約は [architecture](../design/master/architecture.md) / [operations](../design/master/operations.md) / [security](../design/master/security.md) を参照する。提供元は2026-10-12の対象機に関する orchestrator の実機確認事実である。原ログ・動画・個人パスは収録しない。終了コードや日時・prompt_id が提供されない場合は未提供と記し、推測で補わない。以下の既存実機成功を新しいスクリプトの実機合格とは扱わない。
+要件は [要件書](../requirements/issue-1-requirements.md)、決定は [設計書](../design/issue-1-design.md)、現在の契約は [architecture](../design/master/architecture.md) / [operations](../design/master/operations.md) / [security](../design/master/security.md) を参照する。提供元は2026-10-12の対象機に関する orchestrator の実機確認事実である。原ログ・動画・個人パスは収録しない。終了コードや日時・prompt_id が提供されない場合は未提供と記し、推測で補わない。手作業・試作の記録と、コミット b38c0cb の新規スクリプトの実行結果を分ける。今回の修正差分の実機成功とは読み替えない。
 
 各レコードは ID / FR・AC・D / 成果物 / 要件節 / Issue設計節 / マスター節 / 日付・時刻 / 固定版・条件 / 開始状態 / 状態3区分 / 手順 / 期待・実際 / 終了コード / 証跡 / 対処 / 未確認範囲を持つ。クリーンはその導入対象と取得途中データが存在しない開始状態である。
 
@@ -31,7 +31,7 @@
 | 手順 | 各版とインスタンス・共有先・venv の実配置を確認（提供事実） |
 | 期待・実際 | 本体 ~/ComfyUI-Installs/ComfyUI/ComfyUI、venv はその .venv、共有モデル ~/ComfyUI-Shared/models、出力 ~/ComfyUI-Shared/output |
 | 終了コード / 証跡 | スクリプト終了コード未提供 / 対象機の構成・実配置の提供テキスト |
-| 対処 / 未確認範囲 | 別配置は明示CLI / 新規resolverの実機・ffprobe版・他機体 |
+| 対処 / 未確認範囲 | 別配置は明示CLI / 今回の修正差分の実機再実行・ffprobe版・他機体 |
 
 ## 容量と導入
 
@@ -45,9 +45,9 @@
 | 手順 | 公式 dmg の署名・公証確認、初回 GUI、固定ノード配置、pip install --dry-run 後導入、pip check、固定3リビジョン取得、再起動後の登録確認（手作業） |
 | 期待・実際 | Notarized Developer ID。既存配布物の変更なし・14個追加・pip check 問題なし。4ノード登録。全136件サイズ一致（base66件77,770,657,762 / int8 13件37,797,145,373 / turbo57件1,559,967,577 bytes）。合計117,127,770,712 bytes ≈117.13GB ≈109GiB。baseはFL2VA指定6コンポーネントのみ |
 | 終了コード / 証跡 | 個別終了コード未提供 / 手作業導入・pip check・サイズ全件一致の提供結果 |
-| 対処 / 未確認範囲 | 競合は本人の退避、pip check確認 / 新規install・downloadの実機、R・余裕・実測free・有効free・Nの実数、キャッシュ/生成物追加容量 |
+| 対処 / 未確認範囲 | 競合は本人の退避、pip check確認 / 今回の修正差分の実機再実行・クリーンノード導入・base/int8取得・実測free（既存installとTurbo等のCLI実機はLIVEレコード参照）、キャッシュ/生成物追加容量 |
 
-AC-3 の容量不足注入は「必要量の上書き」から **空き容量側を下げる `min(実測,N)`** に置換する。manifest由来の必要量を維持し、不足だけを再現してゲートを緩めないためである。R=0の完了済み経路とTurbo初回・2回目の新規CLI実機は下の未検証枠で記録する。
+AC-3 の容量不足注入は「必要量の上書き」から **空き容量側を下げる `min(実測,N)`** に置換する。manifest由来の必要量を維持し、不足だけを再現してゲートを緩めないためである。R=0の完了済み経路とTurbo初回・2回目のCLI実機結果は下のLIVEレコードに記録する。
 
 ## 直接生成
 
@@ -61,7 +61,7 @@ AC-3 の容量不足注入は「必要量の上書き」から **空き容量側
 | 手順 | 試作で固定APIグラフを直接投入、完了・保存・両ストリームと全デコードを確認 |
 | 期待・実際 | 成功、生成を伴う約52秒、MP4存在。H.26464×64・24fps・39フレーム＋AAC stereo32kHz、全デコード成功。保存先は ~/ComfyUI-Shared/output/minimax_h3/ 配下（個別ファイル名未提供） |
 | 終了コード / 証跡 | 試作・デコード終了コードの数値未提供、エラー無しの成功報告 / 提供された直接スモーク結果 |
-| 対処 / 未確認範囲 | GUI PATHのffmpeg解決失敗には固定絶対パスとvenv binリンク / 新規submitの実機・prompt_id・原グラフ全文・同サイズ改変 |
+| 対処 / 未確認範囲 | GUI PATHのffmpeg解決失敗には固定絶対パスとvenv binリンク / 今回の修正差分の実機再実行・原グラフ全文・同サイズ改変（b38c0cbの実機submitとprompt_idはLIVE-DIRECT-SMOKE参照） |
 
 | フィールド | 記録 |
 | --- | --- |
@@ -82,12 +82,12 @@ AC-3 の容量不足注入は「必要量の上書き」から **空き容量側
 | ID / FR・AC・D | CHAT-SMOKE / FR-4・FR-7・FR-8 / AC-4・AC-7 / D-4〜D-7 |
 | 成果物 / 要件節 | register・submit・設定例・README / FR-4・FR-7・AC-7 |
 | Issue設計節 / マスター節 | register・submit・検証記録 / architecture データフロー・operations 保存 |
-| 日付・時刻 / 固定版・条件 | 2026-10-12、HOST-01構成、qwen3.8:27b-mlx、スモーク64×64・1秒・steps5。履歴seed3105209621。プロンプトは指定あり（原文未提供） |
+| 日付・時刻 / 固定版・条件 | 2026-10-12、HOST-01構成、qwen3.8:27b-mlx、スモーク64×64・1秒・steps5。履歴seed3105209621。promptは A golden retriever puppy running on a sunny beach, waves crashing softly |
 | 開始状態 / 状態3区分 | desktop設定・ダミーキー・プラグイン・試作のライブラリ登録済み、Harness再起動後 / 既存環境で検証 |
 | 手順 | 登録ワークフロー一覧と対象ノード取得、ライブラリidから同期実行、実投入グラフを元データで照合、動画検査と同時刻Ollamaログを照合 |
 | 期待・実際 | 成功61秒。呼出し comfyui_workflow action=run、ライブラリid、parametersにprompt/width/height/duration_seconds/steps、mode=sync、timeout_ms=900000。履歴の3ノード構成と固定入力が登録グラフと一致、差分は公開6項目だけ。seedはランダム化。H.26464×64・39フレーム＋AAC stereo、MP4存在、全デコード成功 |
 | 終了コード / 証跡 | ツール・デコードの数値未提供 / 同時刻のOllama POST /v1/chat/completions 13:10:37・13:11:12・13:12:08・13:12:22、4件とも200。元グラフ照合の提供結果。生ログ・id・原グラフ全文は未提供 |
-| 対処 / 未確認範囲 | 同期を使い、完了は同じComfyUI起動中の履歴で確認 / 新規register/verify実機、原グラフ全文の収録、async、ツール承認機構 |
+| 対処 / 未確認範囲 | 同期を使い、完了は同じComfyUI起動中の履歴で確認 / リポジトリ版の登録項目によるチャット生成、原グラフ全文の収録、async、ツール承認機構。試作版の履歴verifyはLIVE-CHAT-VERIFY参照 |
 
 | フィールド | 記録 |
 | --- | --- |
@@ -97,9 +97,9 @@ AC-3 の容量不足注入は「必要量の上書き」から **空き容量側
 | 日付・時刻 / 固定版・条件 | 2026-10-12、HOST-01構成、チャット448×768・15秒・steps9（seed・prompt原文未提供） |
 | 開始状態 / 状態3区分 | チャット環境導入済み / 既存環境で検証 |
 | 手順 | チャットから生成、チャット期限後もComfyUIの継続・完了を確認 |
-| 期待・実際 | ComfyUI計測48分で完了成功。H.264448×768・361フレーム＋AAC stereo、MP4存在、全デコード成功。チャット同期は15分期限のため先にタイムアウトしうるが生成は継続 |
+| 期待・実際 | ComfyUI計測48分で完了成功。H.264448×768・361フレーム・15.04秒＋AAC stereo、MP4存在、全デコード成功。チャット同期は15分期限のため先にタイムアウトしうるが生成は継続 |
 | 終了コード / 証跡 | 数値未提供・デコード成功 / 提供された15秒完了結果（40分前後の途中観測を完了値に使わない） |
-| 対処 / 未確認範囲 | 指示文に900000ms期限を明示。再投入せず出力/履歴を確認。submitは7200秒 / 新規CLI・正確な公開6値・繰返し成功率 |
+| 対処 / 未確認範囲 | 指示文に15秒なら4200000ms（70分）の期限を明示。再投入せず出力/履歴を確認。submitは7200秒 / 新規CLI・正確な公開6値・繰返し成功率 |
 
 ## 設定・互換性・待受・メモリ・事前確認
 
@@ -113,7 +113,7 @@ AC-3 の容量不足注入は「必要量の上書き」から **空き容量側
 | 手順 | キー欠落・互換性拒否を確認し、利用者の手作業追記と明示承諾後の完全一致例外・add・再起動 |
 | 期待・実際 | No API key for provider: ollama は ~/.dsh/.env の非秘密ダミー値で解消。installation rejected: Plugin dsh-comfyui@0.5.4 is incompatible with dsh 0.2.0-rc.2: peerDependencies ... を確認。本人承諾後 dsh plugin --profile desktop allow-version dsh-comfyui@0.5.4 --dsh-version 0.2.0-rc.2 --accept-risk、続けてadd同版で導入。Harnessは実行中にcordis.patch.ymlを自己再保存 |
 | 終了コード / 証跡 | 数値未提供 / 拒否出力・対象版・承諾と導入の提供事実 |
-| 対処 / 未確認範囲 | 既存設定を保持し再適用、本人の手動例外 / 上流未マージ修正は未適用・async未検証・新規D-6/D-7実機 |
+| 対処 / 未確認範囲 | 既存設定を保持し再適用、本人の手動例外 / 上流未マージ修正は未適用・async未検証・今回の修正差分の実機再実行（b38c0cbのD-6/D-7はLIVE-DIAGNOSTIC参照） |
 
 | フィールド | 記録 |
 | --- | --- |
@@ -125,7 +125,7 @@ AC-3 の容量不足注入は「必要量の上書き」から **空き容量側
 | 手順 | 待受を実機確認（手作業・提供事実） |
 | 期待・実際 | ComfyUI127.0.0.1:8188、Ollama127.0.0.1:11434、Harness127.0.0.1:19387、いずれもループバックのみ |
 | 終了コード / 証跡 | スクリプト終了コード未提供 / 提供されたTCP待受結果 |
-| 対処 / 未確認範囲 | 外部公開禁止・CORS/--listen禁止 / 新規D-8/D-9全PID検査・UDP |
+| 対処 / 未確認範囲 | 外部公開禁止・CORS/--listen禁止 / 今回の修正差分の実機再実行・UDP（b38c0cbのD-8/D-9はLIVE-DIAGNOSTIC参照） |
 
 | フィールド | 記録 |
 | --- | --- |
@@ -151,21 +151,36 @@ AC-3 の容量不足注入は「必要量の上書き」から **空き容量側
 | 終了コード / 証跡 | 該当なし / 提供された事前確認結果、実装担当は固定ノード入力・保存記述・requirementsとプラグイン型/保存処理を読取 |
 | 対処 / 未確認範囲 | 信頼できない入力をエージェントに実行させない / 依存パッケージの中身未確認。全面的安全性保証ではない |
 
-## 新規スクリプトの実機検証枠
+基本モデルの取得範囲には Python ファイルが24件含まれる（FL2VA/audio_vae/*.py 9件・FL2VA/video_vae/*.py 15件）。固定コミットのノードのソースに importlib・__import__・exec・eval・runpy の使用は無く（2026-10-12、文字列検索で確認）、これらのファイルをノードが実行する経路は見つかっていない。ファイルの中身自体は未確認。
 
-次の表の **各行を独立したレコード**とし、共通フィールドを次のように定める。日付・時刻=未実施、固定版・条件=HOST-01と固定SHA、開始状態=表記の計画（実測未記録）、状態3区分=**未検証（実装後に orchestrator が実施）**、期待・実際=期待は表、実際は未実施、終了コード=未取得、証跡=未取得、未確認範囲=当該新規CLIの実機動作全体。成功と読み替えない。
+## スクリプトの実機検証結果
 
-| ID / FR・AC・D | 成果物 / 要件節 / Issue設計節 / マスター節 | 開始状態・手順 | 期待 / 対処 |
+次の表の **各行を独立したレコード**とする。共通フィールドは日付=2026-10-12（時計時刻未提供）、対象=b38c0cb のスクリプトと HOST-01 の固定版、実行=ComfyUI 仮想環境の Python `-I -B`、証跡=orchestrator が提供した実機出力・前後比較である。通常の開始状態は手作業で導入済みの既存環境。クリーンは表の一時配置先だけに適用する。期待は各CLIの契約、実際と終了コードは表に記す。未検証行には実際・終了コード・証跡は無い。今回の修正は実機再実行していない。
+
+| ID / FR・AC・D | 成果物 / 要件節 / Issue設計節 / マスター節 | 開始状態 / 状態3区分・手順 | 実際・終了コード / 対処・未確認範囲 |
 | --- | --- | --- | --- |
-| LIVE-INSTALL / FR-3 / AC-3 | install / FR-3 / install / operations 非変更 | 当該ノード無し・ComfyUI停止、固定requirements導入 | 新規依存のみ・既存版不変・pip check / 競合は保持 |
-| LIVE-INSTALL-CONFIG / FR-3 / AC-3 | install / 権限・FR-3 / install / security 配布 | pip設定ファイルとgit設定に別取得元がある状態、install | 明示PyPI・固定GitHubから変わらない / 子隔離を確認 |
-| LIVE-TURBO / FR-3 / AC-3・D-3 | download / AC-3 / download / operations 非変更 | tempfileの空の配置先、本人同意のTurbo取得→同条件2回目 | 初回0・全件サイズ一致、2回目0・変更/再取得無し / R/free/N/余裕/mtimeを記録 |
-| LIVE-DIAGNOSTIC / FR-5 / AC-5・D-1〜D-9 | check / 診断 / check / operations 診断 | 導入・登録・3サービス起動済み、全診断 | 全PASS・終了0 / 該当DのREADME対処表 |
-| LIVE-DIRECT-SMOKE / FR-6 / AC-6・AC-11 | submit・workflow / FR-6 / submit / operations 保存 | 稼働ComfyUI、スモーク投入 | 完了・出力存在・H.264/AAC・64×64・全デコード0 / エラー6・期限7・不合格8 |
-| LIVE-DIRECT-5S / FR-6 / AC-6 | submit / AC-6 / submit / operations 保存 | 768×448・5秒・steps9・seed42投入 | 同じ動画検査合格 / 状態・メモリ・期限確認 |
-| LIVE-CHAT / FR-4・FR-7 / AC-4・AC-7 | register・submit・設定例 / FR-7 / register・submit / architecture フロー | 登録→チャット同期スモーク→verify | ツールid/引数・実投入グラフ・6項目・動画・Ollamaログ照合 / 任意投入を区別 |
-| LIVE-CHAT-REREGISTER / FR-7 / AC-7・D-4 | register・check / 冪等性・FR-7 / register・check / operations 登録 | チャット生成後 register再実行・D-4診断 | register0・バイト不変・D-4 PASS / 別内容はパネル削除再登録 |
-| LIVE-MEMORY / FR-8 / AC-12 | README・本記録 / メモリ / 検証記録 / operations 生成 | チャット前後・稼働モデル・時計時刻を記録 | 文脈・Qwen/全体使用量の追跡 / 文脈・モデル・同時実行削減 |
+| LIVE-INSTALL / FR-3 / AC-3 | install / FR-3 / install / operations 非変更 | 手作業で導入済み / 既存環境で検証。引数なし | 0、既存版不変 / pip check PASS、追加配布物なし、ノード追跡ファイル不変、ffmpegとモデル入口リンクの作成時刻不変。未確認: ノード無しからの新規CLI導入、今回のwheel限定・事前check等の修正の実機動作 |
+| LIVE-INSTALL-CONFIG / FR-3 / AC-3 | install / 権限・FR-3 / install / security 配布 | 別取得元を持つ利用者pip/git設定下 / 未検証 | 理由: 該当設定下の実機installは未実施。argv・子環境隔離は単体テストのみ。本人の設定を保持して実機で確認する |
+| LIVE-DOWNLOAD-EXISTING / FR-3 / AC-3・D-3 | download / AC-3 / download / operations 非変更 | 3モデル既存 / 既存環境で検証。引数なし | 0、すべて完了済み・変更なし。同意要求・取得なし |
+| LIVE-CONSENT / FR-2 / AC-2 | download / FR-2 / download / security 信頼境界 | 空の一時配置先 / クリーン状態で検証。Turbo・標準入力なし・同意フラグなし | ライセンス表示後3、配置先不作成。本人の同意無しでは取得しない |
+| LIVE-TURBO / FR-3 / AC-3・D-3 | download / AC-3 / download / operations 非変更 | 空のtempfile配置先 / クリーン状態で検証。本人が3モデルのライセンス同意済み、Turboを同意フラグ付き取得→同条件2回目 | 初回0、57件・1,559,967,577 bytes。R=1559967577・余裕=1073741824・必要=2633709401 bytes、実測free未提供。2回目0・完了済み・再取得なし。未確認: base/int8のクリーンCLI取得 |
+| LIVE-CAPACITY / FR-3 / AC-3 | download / AC-3 / download / operations 非変更 | 別の空の一時配置先 / クリーン状態で検証。--test-free-bytes 1000 | 有効free=1000、4、配置先不作成。必要量を維持し空き側だけ下げる方式で不足を再現する |
+| LIVE-MODEL-FAULTS / FR-3 / AC-3・D-3 | download / AC-3 / download / operations 非変更 | Turbo取得済みの一時配置先 / 既存環境で検証。1回ずつ故障注入 | README.mdへ1バイト追加→5、conversion_manifest.jsonを半分に切詰め→5、.cache/huggingface/download/probe.incomplete→5、復元→0。各実行前後の全ファイルのサイズ/mtime/小さいファイルのSHA-256は不変。自動修復無し |
+| LIVE-DIAGNOSTIC / FR-5 / AC-5・D-1〜D-9 | check / 診断 / check / operations 診断 | 導入・試作登録・3サービス起動済み / 既存環境で検証。引数なし | 全PASS・0。D-3全136件完了と入口一致、D-4登録固定入力一致・ffprobe有り、D-8/D-9全TCP LISTENがループバック。lsof機械形式の実出力を解析。UDP/CORSは対象外 |
+| LIVE-DIRECT-SMOKE / FR-6 / AC-6・AC-11 | submit・workflow / FR-6 / submit / operations 保存 | 稼働ComfyUI / 既存環境で検証。既定スモーク・--timeout 1200 | 0、prompt_id=ce519269-ce90-4f8e-b2f2-2fc9f8ded5d4、51.4秒、promptはワークフロー既定、64×64・1秒・steps5・seed0。履歴照合PASS、~/ComfyUI-Shared/output/minimax_h3/ComfyUI_00005_.mp4、H.26464×64/AAC/全フレームデコード成功 |
+| LIVE-DIRECT-5S / FR-6 / AC-6 | submit / AC-6 / submit / operations 保存 | 768×448・5秒・steps9・seed42 / 未検証 | この条件の手作業・試作の成功はDIRECT-5Sに記録する。b38c0cb CLIの実行結果は未提供のため未検証。新規CLIで同じ動画検査を行う |
+| LIVE-CHAT-VERIFY / FR-7 / AC-7 | submit / FR-7 / submit / operations 保存 | 試作ライブラリでチャット生成済み / 既存環境で検証。--verify-history c014abbc-8117-4a5d-902d-05512c6b7d50 | 0、prompt="A golden retriever puppy running on a sunny beach, waves crashing softly"、64×64・1.0秒・steps5・seed3105209621。登録試作版とリポジトリ双方の固定入力一致、ComfyUI_00003_.mp4検査PASS |
+| LIVE-CHAT / FR-4・FR-7 / AC-4・AC-7 | register・submit・設定例 / FR-7 / register・submit / architecture フロー | リポジトリ版の項目を登録してチャット生成 / 未検証 | 理由: 実機ライブラリには同名の試作版がありregisterは5で拒否した。本人が試作版をパネルで削除して登録し直した後に実施する。試作版チャットの履歴照合成功とは区別する |
+| LIVE-REGISTER / FR-7 / AC-7 | register / FR-7 / register / operations 登録 | 空のtempfileライブラリ / クリーン状態で検証。1回目→2回目 | 1回目登録0（Harness起動中警告）、2回目変更なし0、workflows.jsonのSHA-256は両回同一。今回の説明文と実用既定値の登録は実機未実施 |
+| LIVE-CHAT-REREGISTER / FR-7 / AC-7・D-4 | register・check / 冪等性・FR-7 / register・check / operations 登録 | 試作同名項目のある実機ライブラリ / 既存環境で検証。引数なしregisterとcheck | registerは同名別内容（原本保持）5、ライブラリ非変更。checkのD-4はPASS（固定入力一致）。この登録項目はリポジトリ版の同内容ではないため、同内容0を実機ライブラリで確認したとは扱わない |
+| LIVE-MEMORY / FR-8 / AC-12 | README・本記録 / メモリ / 検証記録 / operations 生成 | Qwen稼働と15秒生成 / 既存環境で検証 | MEMORY-01とCHAT-15Sの実測を参照。15秒動画は48分、H.264448×768・361フレーム・15.04秒、AACステレオ、全フレームデコード成功、生成中空き率41〜44%。測定時計時刻は未提供 |
+| LIVE-ASYNC / FR-7 / AC-7 | README / FR-7 / register・submit / architecture フロー | async実行 / 未検証 | 理由: 今回の構成でasync実行を行っていない。標準はsync、未検証を成功扱いしない |
+
+セッション記録から抽出した呼出しは `comfyui_workflow` の `{"action":"run","id":"<ライブラリの id>","parameters":{"duration_seconds":1,"height":64,"prompt":"A golden retriever puppy running on a sunny beach, waves crashing softly","steps":5,"width":64},"mode":"sync","timeout_ms":900000}`。`comfyui_run` によるグラフの直接指定は呼ばれていない。長時間では既定900000msによりチャット側だけ先にタイムアウトしうるがComfyUI側は継続し完了するため、再投入しない。
+
+S1-01 の修正前実機確認: writable は ~/.dsh/.env を拒否する一方、大文字小文字違いの ~/.DSH/.env・~/.Dsh/profiles/desktop/cordis.patch.yml と別マウント経路のホーム別名を許可した。いずれも samefile で同実体だった。修正の単体テストは偽ホーム・大小別名・リンク・別マウント経路相当の別名で保護と許可を確認する。実機の保護再確認は未実施。
+
+ライセンス原文リンク: 基本モデルLICENSE・INT8 LICENSE・Turbo README.mdの固定リビジョンURLはすべてHTTP 200（2026-10-12、orchestrator提供）。内容の要約は非正本。
 
 ## ローカル単体テスト・変異検証
 
@@ -179,11 +194,11 @@ AC-3 の容量不足注入は「必要量の上書き」から **空き容量側
 | 手順 | python3 -m unittest discover -s tests -v、要件由来の変異を一時コピーへ1箇所ずつ適用 |
 | 期待・実際 | テストと変異の最終結果は下表へ記録する |
 | 終了コード / 証跡 | 最終実行結果を下表へ記録する。実機成功の代替にはしない |
-| 対処 / 未確認範囲 | 必須故障の修正と再実行 / 実機枠の全項目、独立レビュー、Python3.11での実行（コードは3.11以上対応） |
+| 対処 / 未確認範囲 | 必須故障の修正と再実行 / 実機表の未検証項目、今回の修正差分の独立再レビュー、Python3.11での実行（コードは3.11以上対応） |
 
-ローカル結果: `python3 -m unittest discover -s tests -v` は84件成功、失敗0・エラー0・スキップ0、終了0（Python3.14.6）。このうち1件は下の20変異を別プロセスの単体テストで検査する。全CLI6本の `-I --help` も成功。PyYAML 不在時は3件のYAMLテストを理由付きスキップする。hubはスタブを使うため不在でもテスト可能で、hub不在/旧版の終了1を別途注入する。
+b38c0cb のローカル結果: `python3 -m unittest discover -s tests -v` は84件成功、失敗0・エラー0・スキップ0、終了0（Python3.14.6）。このうち1件は下の20変異を別プロセスの単体テストで検査する。全CLI6本の `-I --help` も成功。PyYAML 不在時は3件のYAMLテストを理由付きスキップする。hubはスタブを使うため不在でもテスト可能で、hub不在/旧版の終了1を別途注入する。
 
-変異結果: 以下20件すべてで指定テストが失敗する。構文をcompileで確認してから実行し、構文エラー・ネットワーク失敗・スキップを検出成功に数えない。原実装の内容不変と一時コピーの削除・不在をテストで確認する。
+b38c0cb の変異結果: 以下20件すべてで指定テストが失敗する。構文をcompileで確認してから実行し、構文エラー・ネットワーク失敗・スキップを検出成功に数えない。原実装の内容不変と一時コピーの削除・不在をテストで確認する。
 
 | 変異 | 落ちたテスト（test_*.py のメソッド名） | 結果 |
 | --- | --- | --- |
@@ -224,4 +239,61 @@ AC-3 の容量不足注入は「必要量の上書き」から **空き容量側
 | 終了コード / 証跡 | 点検結果を最終報告へ記載。PR/Issue貼付予定テキストはorchestratorが同じ検索を実施 |
 | 対処 / 未確認範囲 | 個人パスは~、秘密は収録しない / PR・Issue・独立レビュー未実施 |
 
-公開ファイル一覧は冒頭の対応表と README、.gitignore、configの3資材、workflow、scriptsの6ファイル、tools/make_manifest.py、tests/support.py・test_common.py・test_download.py・test_install.py・test_check_env.py・test_submit.py・test_register.py・test_manifest_and_docs.py・test_mutations.py、要件書・Issue設計書・マスター3書・本記録である。新規26ファイルと設計書1ファイルの変更を引き渡す。テスト用一時領域は tempfile の context/cleanup で削除し、変異コピーも終了後不在を確認する。既存worktreeは成果物引渡しのため保持し、commit/push・その後のクリーンアップはorchestratorが担当する。
+公開ファイル一覧は冒頭の対応表と README、.gitignore、configの3資材、workflow、scriptsの6ファイル、tools/make_manifest.py、tests/support.py・test_common.py・test_download.py・test_install.py・test_check_env.py・test_submit.py・test_register.py・test_manifest_and_docs.py・test_mutations.py、要件書・Issue設計書・マスター3書・本記録である。今回の修正差分と新規 tests/test_review_fixes.py を引き渡す。22e4ed7 は単体91件成功、同コミットの期限・HTTP例外・envコメント・待受・submit配線・helpの9変異すべて検出との結果が提供されている。テスト用一時領域は tempfile の context/cleanup で削除し、変異コピーも終了後不在を確認する。既存worktreeは成果物引渡しのため保持し、commit/push・その後のクリーンアップはorchestratorが担当する。
+
+
+## 今回の修正差分のローカル検証（2026-10-13）
+
+開始HEADは22e4ed7、feature/issue-1の未コミット差分を対象とする。ネットワーク・実サービス・実際の ~/.dsh は使わず、偽ホーム/tempfile/mock、単体テストと全6CLIの --help だけで検証する。`python3 -B -m unittest discover -s tests -v` は108件成功、失敗0・エラー0・スキップ0、終了0。追加17テストを含む。大文字小文字違いの保護テストも今回の一時ボリュームでは実行し成功（case-sensitiveのボリュームでは理由付きskip）する。別マウント経路相当はディレクトリリンクと、その別名を保持するresolveスタブでdev/inode比較を検証し、OSのmount操作は行わない。
+
+変異は既存20件＋追加33件＝53件すべて検出する。各変異前の同じ対象テストは成功し、1箇所の一時コピー変異後に意図したテストが失敗する。構文エラー・スキップ・ネットワーク失敗は検出として数えない。原本バイト不変と一時コピーの削除を確認し、git diffで意図した修正差分だけが残ることを確認する。22e4ed7のHTTP期限・HTTP例外、envコメント判定、サービス別待受、help既定値、submit配線は変更を巻き戻さず、対応する既存テストも成功する。要件書とワークフローファイルのgit diffは空である。
+
+| 同型のクラス | 点検 / 直接修正 | 点検結果 |
+| --- | --- | --- |
+| 包含・実体一致 | 7 / 4 | inside・writable・check_link・D-3を変更。safe_model_path・inspect_models・output_videoは共通修正を消費し既存回帰も確認 |
+| writableの書込CLI | 4 / 1 | make_manifest・register・download・installを全点検。installは事前順序も変更。4CLIすべて別名拒否2・原本のバイト/stat不変（installのinstance/venv/models-dirも検査） |
+| 外部プロセス/デコード | 3 / 3 | command・listenersのstdin=DEVNULL、ffmpeg -nostdin。git子環境1 / 1も非対話固定 |
+| pip計画/導入 | 2 / 2 | 共通install_argsで両方wheel限定、事前check1 / 1追加、失敗全7工程を点検し状態表示を統一 |
+| モデル状態表示 | 4 / 4 | download初回/最終、check、makeの全消費者で集計・verboseを配線 |
+| 容量呼出し | 3 / 3 | 作成前/作成後/各取得前の検査を保持し表示の前回値を引継ぐ |
+| 既存項目由来の端末表示 | 3 / 3 | registerの差分キー・既存id、verifyの登録idをJSONエスケープ。新規UUIDと形式検査後prompt_idは該当せず |
+
+追加変異の個別結果:
+
+| 変異 | 落ちたテスト | 結果 |
+| --- | --- | --- |
+| 実体を文字列比較へ戻す | test_mount_alias_identity_all_writers_preserve_original | 対照成功・変異検出 |
+| 書込保護を外す | test_symlink_alias_all_writers_preserve_original | 対照成功・変異検出 |
+| 未存在要素のcasefoldを外す | test_allowed_paths_missing_components_and_existing_case_distinction | 対照成功・変異検出 |
+| 既存実体の大小を文字列許可 | test_allowed_paths_missing_components_and_existing_case_distinction | 対照成功・変異検出 |
+| command標準入力を継承 | test_all_child_input_is_closed | 対照成功・変異検出 |
+| listeners標準入力を継承 | test_all_child_input_is_closed | 対照成功・変異検出 |
+| git対話を許可 | test_all_child_input_is_closed | 対照成功・変異検出 |
+| ffmpeg対話を許可 | test_decode_disables_stdin | 対照成功・変異検出 |
+| 完了ファイルを常時表示 | test_model_summary_verbose_and_pass_remedies | 対照成功・変異検出 |
+| PASSにも対処を表示 | test_model_summary_verbose_and_pass_remedies | 対照成功・変異検出 |
+| 容量を毎回表示 | test_capacity_only_prints_changes_but_always_checks | 対照成功・変異検出 |
+| 取得進捗を外す | test_acquire_missing_only_revision_token_recheck | 対照成功・変異検出 |
+| Comfy構成検査を外す | test_missing_comfy_structure_no_creation_or_commands | 対照成功・変異検出 |
+| pip事前checkを外す | test_precheck_and_wheel_failure_are_nonchanging | 対照成功・変異検出 |
+| wheel限定を外す | test_install_failure_stage_changed_and_no_blind_retry | 対照成功・変異検出 |
+| 計画失敗を6へ戻す | test_precheck_and_wheel_failure_are_nonchanging | 対照成功・変異検出 |
+| 変更状態を未変更へ戻す | test_install_failure_stage_changed_and_no_blind_retry | 対照成功・変異検出 |
+| 失敗工程を消す | test_failure_reports_acquisition_postcheck_placement_and_link | 対照成功・変異検出 |
+| 登録既定値をスモークへ戻す | test_practical_defaults_graph_unchanged_and_agent_description | 対照成功・変異検出 |
+| 説明文の期限を欠落 | test_practical_defaults_graph_unchanged_and_agent_description | 対照成功・変異検出 |
+| 登録説明文の配線を外す | test_practical_defaults_graph_unchanged_and_agent_description | 対照成功・変異検出 |
+| description比較を外す | test_description_tags_and_terminal_control_characters | 対照成功・変異検出 |
+| tags比較を外す | test_description_tags_and_terminal_control_characters | 対照成功・変異検出 |
+| 既存idを未加工表示 | test_description_tags_and_terminal_control_characters | 対照成功・変異検出 |
+| 既存キー名を未加工表示 | test_description_tags_and_terminal_control_characters | 対照成功・変異検出 |
+| 履歴不在の配線を外す | test_missing_verify_id_fails_immediately | 対照成功・変異検出 |
+| 公開型不正を固定入力不一致表示 | test_history_public_type_message_and_comparison_targets | 対照成功・変異検出 |
+| 照合相手を非表示 | test_history_public_type_message_and_comparison_targets | 対照成功・変異検出 |
+| download verbose配線を外す | test_verbose_reaches_all_summary_consumers | 対照成功・変異検出 |
+| check verbose配線を外す | test_verbose_reaches_all_summary_consumers | 対照成功・変異検出 |
+| make verbose配線を外す | test_verbose_reaches_all_summary_consumers | 対照成功・変異検出 |
+| 診断verbose引数を捨てる | test_full_diagnostics_api_faults_individual | 対照成功・変異検出 |
+| 追加cacheを必須件数へ混入 | test_model_summary_verbose_and_pass_remedies | 対照成功・変異検出 |
+
+今回の変更の実機再実行・独立再レビュー・Python3.11での実行、リポジトリ版登録項目によるチャット生成、別取得元設定下のinstall、asyncは未実施。commit/pushは行わない。補助編集スクリプトは削除し、成果物引渡しのworktreeは保持する。

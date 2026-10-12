@@ -40,7 +40,7 @@ class ManifestTests(Case):
     def test_generation_no_token_fixed_url_and_compare_preserves(self):
         output = self.root / 'manifest.json'
         output.write_text('original')
-        args = argparse.Namespace(output=str(output), compare_dir=str(self.root / 'empty'), http_timeout=3)
+        args = argparse.Namespace(output=str(output), compare_dir=str(self.root / 'empty'), http_timeout=3, verbose=False)
         def request(url, **kwargs):
             self.assertTrue(url.startswith('https://huggingface.co/api/models/'))
             self.assertTrue(url.endswith('?blobs=true'))

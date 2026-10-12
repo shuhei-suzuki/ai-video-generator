@@ -2,7 +2,7 @@
 
 ## 構成と責務
 
-ローカル単一利用者の macOS 26 / Apple Silicon / 128GB を対象とする。基準機は M5 Max。Comfy Desktop 1.1.6 は ComfyUI 0.39.2、Python 3.13.12、Manager V4.2.2 を含む。Ollama 0.33.3 は qwen3.8:27b-mlx を提供し、DeepSeek Harness Desktop 0.2.0-rc.2 と dsh-comfyui 0.5.4 がチャット経路を担う。対象機の ffmpeg は Homebrew 7.1.1、PyYAML は6.0.3、huggingface_hub は1.30.0である。ffprobe の版は未確認である。
+ローカル単一利用者の macOS 26 / Apple Silicon / 128GB を対象とする。基準機は M5 Max。Comfy Desktop 1.1.6 は ComfyUI 0.39.2、Python 3.13.12、Manager V4.2.2 を含む。Ollama 0.33.3 は qwen3.8:27b-mlx を提供し、DeepSeek Harness Desktop 0.2.0-rc.2 と dsh-comfyui 0.5.4 がチャット経路を担う。対象機の ffmpeg は Homebrew 7.1.1、PyYAML は6.0.3、huggingface_hub は1.30.0である。ffprobe は ffmpeg と同じディレクトリの実行物を使う。
 
 ComfyUI と Ollama の API はそれぞれ 127.0.0.1:8188 と 127.0.0.1:11434 で待ち受ける。Harness の待受ポートは動的で、ループバックのみを許す。認証・テナント・DB はない。
 
@@ -32,6 +32,6 @@ config の一覧がファイル名・バイトサイズの唯一の一覧であ�
 
 workflows/minimax_h3_t2v_api.json がグラフの唯一の出どころである。node 1 ModelLoader → node 2 Generate → node 3 SaveVideo の接続である。ResultToComfyUI は D-2 の登録対象に含み、グラフでは使用しない。モデル・メモリ・キャッシュ・保存先・ffmpeg は固定入力であり、創作の公開値は prompt / width / height / duration_seconds / steps / seed の6項目だけである。
 
-register は同じグラフと公開6項目の既定値をライブラリへ保存する。直接経路はグラフを複製して6項目だけ置換し、ComfyUI の /prompt に送る。チャット経路は Harness → Ollama の /v1/chat/completions → comfyui_workflow action=run → 登録 id を使う同期実行 → ComfyUI である。submit の verify は両経路の履歴をリポジトリと登録項目に照合する。公開値の違いは verify のグラフ合否に含めない。動画ツールの実行物は常にリポジトリの固定入力から導出する。
+register はリポジトリのグラフそのままと公開6項目の実用既定値（prompt はグラフ由来、768×448・5秒・steps9・seed0 random）をライブラリへ保存する。直接 submit とグラフの既定値は64×64・1秒・steps5である。直接経路はグラフを複製して6項目だけ置換し、ComfyUI の /prompt に送る。チャット経路は Harness → Ollama の /v1/chat/completions → comfyui_workflow action=run → 登録 id を使う同期実行 → ComfyUI である。submit の verify は両経路の履歴をリポジトリと登録項目に照合する。公開値の違いは verify のグラフ合否に含めない。動画ツールの実行物は常にリポジトリの固定入力から導出する。
 
-新規スクリプトの実機確認は別の検証工程であり、手作業・試作による対象機の成功は新規 CLI の成功を意味しない。
+実行結果・開始状態・証跡・未確認範囲は [検証記録](../../verification/) に分離する。

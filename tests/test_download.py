@@ -14,6 +14,7 @@ class DownloadTests(Case):
         path = self.root / 'manifest.json'
         write_json(path, fixture_manifest(c))
         return argparse.Namespace(models_dir=str(self.root / 'models'), manifest=str(path),
+                                  verbose=changes.pop('verbose', False),
                                   models=changes.pop('models', ['base', 'int8', 'turbo']),
                                   accept_license=changes.pop('accept_license', False),
                                   test_free_bytes=changes.pop('test_free_bytes', None), **changes)
@@ -109,6 +110,11 @@ class DownloadTests(Case):
             self.assertEqual(capacity.call_count, 4)  # before/after mkdir + 2 files
             self.assertTrue(all(call.args[2] == 2**40 for call in capacity.call_args_list))
         self.assertEqual(existing.stat(), before)
+        text = self.output.getvalue()
+        self.assertIn('取得 1/2:', text)
+        self.assertIn('取得 2/2:', text)
+        self.assertEqual(text.count('配置先:'), 1)
+        self.assertEqual(text.count('base: 完了'), 2)  # initial/final, never inside loop
         for call in calls:
             m = next(m for m in c.MODELS if m['repo'] == call['repo_id'])
             self.assertEqual(call['revision'], m['revision'])

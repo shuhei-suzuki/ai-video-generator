@@ -69,7 +69,7 @@ def check_plan(report, before):
 
 def check_link(path, target):
     if path.exists() or path.is_symlink():
-        if not path.exists() or path.resolve() != target.resolve():
+        if not path.exists() or c.entity_relative(path, target) != ():
             c.fail(5, '補助リンク', '既存の別実体・切れたリンク', c.REPAIR)
         return False
     return True
@@ -98,19 +98,37 @@ def check_checkout(git, target, timeout):
 
 
 def install(args):
+    progress = dict(stage='事前検査', changed=False)
+    try:
+        return install_steps(args, progress)
+    except (c.H3Error, OSError, ValueError, TypeError, KeyError) as exc:
+        changed = progress['changed']
+        state = '変更済み（途中の可能性あり）' if changed else '未変更'
+        retry = ('そのまま再実行しない。本人が pip check・配布物差分・配置を確認後に再実行'
+                 if changed else '原因への対処後に再実行可')
+        if isinstance(exc, c.H3Error):
+            code, cause, remedy = exc.code, exc.cause, exc.remedy
+        else:
+            code, cause, remedy = 1, '入力またはファイル処理に失敗', '配置・権限・形式を確認'
+        c.fail(code, 'install ' + progress['stage'], f'{cause}; 仮想環境: {state}; {retry}', remedy)
+
+
+def install_steps(args, progress):
     p = c.paths(args)
     comfy, venv, models = p['comfy_root'], p['venv'], p['models_dir'].resolve()
+    target = comfy / 'custom_nodes' / c.NODE_DIR
+    entrance = comfy / 'models/minimax_h3'
+    for path in (target, venv, models, entrance, venv / 'bin/ffmpeg', venv / 'bin/ffprobe'):
+        c.writable(path)
+    if not (comfy / 'custom_nodes').is_dir() or not (comfy / 'main.py').is_file():
+        c.fail(1, 'ComfyUI', '本体の構成が無い', 'Comfy Desktop の初回 GUI 起動と --comfy-root を確認')
     python = c.executable(venv / 'bin/python', item='venv Python')
     if not (venv / 'pyvenv.cfg').is_file():
         c.fail(1, 'venv', '仮想環境の構成が無い', 'Comfy Desktop の初回 GUI 起動と --venv を確認')
     git = c.executable(args.git, search=True, item='git')
     graph = c.load_graph()
     ffmpeg, ffprobe = c.video_tools(graph)
-    target = comfy / 'custom_nodes' / c.NODE_DIR
-    entrance = comfy / 'models/minimax_h3'
     links = [(venv / 'bin/ffmpeg', ffmpeg), (venv / 'bin/ffprobe', ffprobe), (entrance, models)]
-    for path in (target, venv, models, entrance, venv / 'bin/ffmpeg', venv / 'bin/ffprobe'):
-        c.writable(path)
     for path in (target.parent, venv / 'bin', models, entrance.parent):
         check_permission(path)
     # All conflicts are checked before acquisition/pip changes.
@@ -121,6 +139,12 @@ def install(args):
         check_checkout(git, target, args.command_timeout)
     pip = [python, '-I', '-m', 'pip', '--isolated']
     c.command(pip + ['--version'], args.command_timeout, 'pip', code=1)
+    try:
+        c.command(pip + ['check'], args.command_timeout, 'pip')
+    except c.H3Error as exc:
+        if exc.code == 7:
+            raise
+        c.fail(5, 'pip事前検査', '既存環境の不整合を先に解消', '本人が pip check と既存依存を確認')
     before = distributions(pip_json(c.command(pip + ['list', '--format=json'], args.command_timeout, 'pip').stdout))
     print('ComfyUI を停止してから導入する。既存パッケージを入れ替える計画は拒否する。')
     with tempfile.TemporaryDirectory(prefix='h3-install-') as temporary:
@@ -128,30 +152,41 @@ def install(args):
         staging = temporary / 'node'
         source = target if target.exists() else staging
         if source == staging:
+            progress['stage'] = '取得'
             c.command([git, 'init', staging], args.command_timeout, 'git')
             c.command([git, '-C', staging, 'fetch', '--depth=1', c.NODE_REPO, c.NODE_SHA], args.command_timeout, 'git')
             c.command([git, '-C', staging, 'checkout', '--detach', 'FETCH_HEAD'], args.command_timeout, 'git')
             check_checkout(git, staging, args.command_timeout)
         req = source / 'requirements.txt'
+        progress['stage'] = '計画'
         requirements(req)
         report = temporary / 'pip-report.json'
-        install_args = ['install', '--index-url', 'https://pypi.org/simple', '-r', req]
-        c.command(pip + install_args + ['--dry-run', '--report', report], args.command_timeout, 'pip')
+        install_args = ['install', '--only-binary', ':all:', '--index-url', 'https://pypi.org/simple', '-r', req]
+        try:
+            c.command(pip + install_args + ['--dry-run', '--report', report], args.command_timeout, 'pip')
+        except c.H3Error as exc:
+            if exc.code == 7:
+                raise
+            c.fail(1, 'pip計画', 'この環境向けの wheel が無い依存がある、または計画に失敗', 'wheel の対応環境・取得先への接続を確認（ソースからビルドしない）')
         try:
             planned = check_plan(pip_json(report.read_bytes()), before)
         except OSError:
             c.fail(1, 'pip計画', 'report 読取不能', '導入せず pip の出力を確認')
         if planned:
+            progress.update(stage='依存導入', changed=True)
             c.command(pip + install_args, args.command_timeout, 'pip')
+        progress['stage'] = '事後検査'
         c.command(pip + ['check'], args.command_timeout, 'pip')
         after = distributions(pip_json(c.command(pip + ['list', '--format=json'], args.command_timeout, 'pip').stdout))
         if any(after.get(name) != version for name, version in before.items()):
+            progress['changed'] = True
             c.fail(6, 'pip事後検査', '既存版の変化', '自動巻戻しなし。本人が pip check と差分を確認')
         if any(after.get(name) != version for name, version in planned.items()):
             c.fail(6, 'pip事後検査', '計画した新規依存が不一致', '本人が pip check を確認')
         print('既存版不変 / pip check PASS')
-        print('追加配布物: ' + ', '.join(sorted(set(after) - set(before))))
+        print('追加配布物: ' + (', '.join(sorted(set(after) - set(before))) or '（なし）'))
         # Recheck checkout and links immediately before publishing into the instance.
+        progress['stage'] = '配置'
         check_checkout(git, source, args.command_timeout)
         for link, real in links:
             check_link(link, real)
@@ -161,6 +196,7 @@ def install(args):
             target.parent.mkdir(parents=True, exist_ok=True)
             shutil.move(str(staging), str(target))
         models.mkdir(parents=True, exist_ok=True)
+        progress['stage'] = 'リンク'
         for link, real in needed_links:
             if check_link(link, real):
                 link.parent.mkdir(parents=True, exist_ok=True)
