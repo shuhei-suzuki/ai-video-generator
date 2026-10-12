@@ -6,7 +6,7 @@ import shutil
 from pathlib import Path
 import sys
 from unittest import mock
-from support import Case, load, fixture_manifest, write_json, exec_file
+from support import Case, load, fixture_manifest, write_json, exec_file, ROOT
 from test_install import InstallTests
 from test_submit import SubmitTests
 
@@ -261,6 +261,22 @@ class InstallFixTests(Case):
 
 
 class RegisterFixTests(Case):
+    def test_chat_examples_distinguish_verified_calls_and_generation_conditions(self):
+        readme = (ROOT / 'README.md').read_text()
+        examples = readme.split('チャットの指示例')[1].split('公開項目は')[0]
+        smoke, five, fifteen = (examples.split('例1（スモーク）：')[1].split('例2（5秒）：')[0],
+                                examples.split('例2（5秒）：')[1].split('例3（15秒）：')[0],
+                                examples.split('例3（15秒）：')[1])
+        self.assertIn('実機で確認した呼び出し', smoke)
+        self.assertIn('timeout_ms=900000', smoke)
+        self.assertIn('直接投入で実機で成功を確認済み', five)
+        self.assertIn('timeout_ms は1800000', five)
+        self.assertIn('timeout_ms=900000 のまま ComfyUI 側の完了を確認', fifteen)
+        self.assertIn('timeout_ms は上限の 3600000', fifteen)
+        for example in (five, fifteen):
+            self.assertIn('この timeout_ms を指定したチャット実行は未検証', example)
+        self.assertNotIn('実機成功条件', examples)
+
     def test_practical_defaults_graph_unchanged_and_agent_description(self):
         r = load('register_dsh_workflow')
         graph = c.load_graph()
@@ -272,8 +288,9 @@ class RegisterFixTests(Case):
         self.assertEqual((graph['2']['inputs']['width'], graph['2']['inputs']['height'], graph['2']['inputs']['steps']), (64, 64, 5))
         self.assertLessEqual(len(r.DESCRIPTION), 2000)
         for text in ('stereo audio', 'Apple Silicon', 'action: run', 'mode: sync', 'Async', 'English',
-                     'multiples of 32', '768x448', '448x768', 'up to 15', '10-14', '48', '1 minute',
-                     '1800000', '4200000', '900000', 'do not resubmit', 'one generation', 'minimax_h3/', 'ffmpeg_path'):
+                     'multiples of 32', '768x448', '448x768', 'up to 15', '9 minutes alone', '14 minutes sharing', '48', '1 minute',
+                     '1800000 for 5 seconds', '3600000 for 15 seconds', 'timeout_ms maximum is 3600000',
+                     'longer timeouts are unverified', '900000', 'do not resubmit', 'one generation', 'minimax_h3/', 'ffmpeg_path'):
             self.assertIn(text, r.DESCRIPTION)
         args = argparse.Namespace(data_dir=str(self.root / 'library'), ps=str(exec_file(self.root / 'ps')), harness_process='fixture')
         with mock.patch.object(r.c, 'command', return_value=argparse.Namespace(stdout='')):
@@ -319,6 +336,9 @@ class SubmitFixTests(Case):
         with mock.patch.object(cc, 'request_json', side_effect=[{}, cc.H3Error(6, 'fixture', 'unexpected polling', 'fixture')]) as request, mock.patch.object(ss.time, 'sleep') as sleep:
             exc = self.raises_code(cc, 2, ss.submit, self.args(verify_history='missing'))
             self.assertIn('履歴に無い ID', exc.cause)
+            self.assertIn('実行中・待機中の可能性（完了後に再実行）', exc.cause)
+            self.assertIn('ComfyUI の再起動で履歴が消えた', exc.cause)
+            self.assertEqual(exc.remedy, '再投入しない。出力ディレクトリと ComfyUI の画面で状態を確認')
             self.assertEqual(request.call_count, 1)
             sleep.assert_not_called()
 

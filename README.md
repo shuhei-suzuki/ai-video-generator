@@ -2,7 +2,7 @@
 
 macOS 26 / Apple Silicon M5 Max / 128GB を基準に、Comfy Desktop と MiniMax H3 MLX でローカルの MP4 を生成し、Ollama の Qwen を使う DeepSeek Harness のチャットからも同じワークフローを実行するための資料と Python ツールです。モデル重みは収録しません。
 
-実機結果とスクリプトの実行範囲は[検証記録](doc/verification/issue-1-verification.md)の開始状態・対象コミット・証跡・未確認範囲を参照してください。2026-10-12 の記録には既存環境での CLI 実行と、空の一時配置先への取得・登録が含まれます。対象外の構成や生成条件の成功を保証しません。
+実機結果とスクリプトの実行範囲は[検証記録](doc/verification/issue-1-verification.md)の開始状態・対象コミット・証跡・未確認範囲を参照してください。記録には既存環境での CLI 実行と、空の一時配置先への取得・登録が含まれます。対象外の構成や生成条件の成功を保証しません。
 
 ## 対象構成とライセンス
 
@@ -111,7 +111,7 @@ dsh plugin --profile desktop allow-version dsh-comfyui@0.5.4 --dsh-version 0.2.0
 dsh plugin --profile desktop add dsh-comfyui@0.5.4
 ```
 
-8. Harness を終了した状態でライブラリへ登録する。起動中は警告して続行するが同時更新は保証しない。登録先は profile の外。既存同名の workflow 全体・parameters（parameter id 除外）・description・tags が今回登録する内容と一致すればバイト不変0、異なれば原本保持5。競合は Harness の ComfyUI パネルで既存項目を削除してから登録し直す。
+8. Harness を終了した状態でライブラリへ登録する。起動中は警告して続行するが同時更新は保証しない。登録先は profile の外。~/.dsh/data または ~/.dsh/data/dsh-comfyui がシンボリックリンクなら、何も書かず2で拒否します。workflows.json 自体のリンクも拒否します。既存同名の workflow 全体・parameters（parameter id 除外）・description・tags が登録する内容と一致すればバイト不変0、異なれば原本保持5。競合は Harness の ComfyUI パネルで既存項目を削除してから登録し直す。
 
 ライブラリの既定値は prompt がワークフローの値、768×448・5秒・steps=9・seed=0（random）です。保存する workflow はリポジトリのグラフそのままで、グラフと直接 submit の既定値は64×64・1秒・steps=5のスモーク条件です。「同じワークフロー」は公開6項目を除いた固定入力の一致で判定します。description は英語で実行ツール・同期モード・条件・所要時間・期限・保存先をエージェントへ案内します。
 
@@ -134,7 +134,7 @@ dsh plugin --profile desktop add dsh-comfyui@0.5.4
 ```sh
 # 固定スモーク: 64×64 / 1秒 / steps=5 / seed=0、シーンと音の既定プロンプト
 ~/ComfyUI-Installs/ComfyUI/ComfyUI/.venv/bin/python -I scripts/submit_h3.py
-# 直接生成の実機確認条件（プロンプトは例。実測時の原文は未提供）
+# 直接生成の実機確認条件（プロンプトは例。単独実測はワークフロー既定値、GPU共用時の原文は未提供）
 ~/ComfyUI-Installs/ComfyUI/ComfyUI/.venv/bin/python -I scripts/submit_h3.py --prompt 'A red panda in a misty bamboo forest, with rustling bamboo and footsteps' --width 768 --height 448 --seconds 5 --steps 9 --seed 42
 # チャット実行の prompt_id を同じ ComfyUI 起動中に照合（新規投入なし）
 ~/ComfyUI-Installs/ComfyUI/ComfyUI/.venv/bin/python -I scripts/submit_h3.py --verify-history PROMPT_ID
@@ -144,26 +144,32 @@ dsh plugin --profile desktop add dsh-comfyui@0.5.4
 
 プロンプトは非空、幅・高さは正の32倍数、秒数は正の有限数、steps は2以上の整数、seed は非負整数です。上限は設けませんが大きい値は時間・メモリ・容量を増やします。生成全体の既定期限は **7200秒**、HTTP は30秒、poll は2秒、動画検査各300秒（`--timeout` / `--http-timeout` / `--poll-interval` / `--command-timeout`）。期限超過でサーバーの生成を止めたり再投入したりしません。
 
-チャットの指示例（実機成功条件。スモークの英語プロンプトはセッション記録の値、長い2条件の英語プロンプトは例）：
+チャットの指示例（長い2条件の英語プロンプトは例）：
+
+例1（スモーク）：試作版の登録項目で実機で確認した呼び出し。英語プロンプトはセッション記録の値です。
 
 > 登録ワークフロー minimax-h3-t2v をライブラリから取得し、その id と parameters を comfyui_workflow action=run に渡して同期実行してください。prompt は「A golden retriever puppy running on a sunny beach, waves crashing softly」、width=64、height=64、duration_seconds=1、steps=5。mode=sync、timeout_ms=900000。同時に1本だけ、モデルパス・ffmpeg_path は変更せず、完了後に prompt_id と保存先を示してください。
 
+例2（5秒）：生成条件は直接投入で実機で成功を確認済み。この timeout_ms を指定したチャット実行は未検証です。
+
 > minimax-h3-t2v のライブラリ id と parameters を comfyui_workflow action=run に渡して mode=sync で生成してください。prompt は「A red panda in a misty bamboo forest, with rustling bamboo and footsteps」、width=768、height=448、duration_seconds=5、steps=9。タイムアウトは30分（timeout_ms は1800000）で。同時に1本だけ、モデルパス・ffmpeg_path は変更せず、prompt_id と保存先を示してください。
 
-> minimax-h3-t2v のライブラリ id と parameters を comfyui_workflow action=run に渡して mode=sync で生成してください。prompt は「A waterfall in a green forest, rushing water and birds singing」、width=448、height=768、duration_seconds=15、steps=9。タイムアウトは 70 分（timeout_ms は 4200000）で。同時に1本だけ、モデルパス・ffmpeg_path は変更せず、prompt_id と保存先を示してください。
+例3（15秒）：生成条件は実機で成功を確認済み（チャット経由で timeout_ms=900000 のまま ComfyUI 側の完了を確認）。この timeout_ms を指定したチャット実行は未検証です。
 
-公開項目は prompt / width / height / duration_seconds / steps / seed の6つだけです。プロンプトは英語で場面と音を書き、width / height は32の倍数、検証済みサイズは768×448（横）と448×768（縦）、秒数は15までを運用目安にします。保存先は ComfyUI の出力ディレクトリの `minimax_h3/` です。seed 省略はプラグインでランダム化します。検証した呼出しは `comfyui_workflow`、`action: run`、ライブラリ id、parameters の5項目、`mode: sync`、`timeout_ms: 900000` です。**既定の同期チャット期限は15分**で、長い動画はチャット側が先に終了しうる一方 ComfyUI は生成を継続します。長い生成には5秒なら1800000、15秒なら4200000を明示し、再投入せず出力ディレクトリまたは実行履歴で完了を確認してください。async とリポジトリ版の登録項目によるチャット生成は未検証です（理由は検証記録）。
+> minimax-h3-t2v のライブラリ id と parameters を comfyui_workflow action=run に渡して mode=sync で生成してください。prompt は「A waterfall in a green forest, rushing water and birds singing」、width=448、height=768、duration_seconds=15、steps=9。タイムアウトは 60 分（timeout_ms は上限の 3600000）で。同時に1本だけ、モデルパス・ffmpeg_path は変更せず、prompt_id と保存先を示してください。
 
-verify は履歴を登録項目とリポジトリの両方へ直接照合し、照合相手（リポジトリのワークフロー・登録 id または登録項目なし）を表示します。履歴に ID が無ければ待たずに2です（ComfyUI の再起動で履歴は消えます）。履歴の公開値の型が不正ならその原因を表示して8です。構成・固定入力が片方でも異なれば外部コマンドを起動せず8です。公開6項目は履歴値を表示し、値差だけは不合格にしません。検査実行物は常にリポジトリの Save 固定入力の ffmpeg と同じ場所の ffprobe です。Save 出力の filename/subfolder/type から通常の MP4 を解決し、H.264 映像・AAC 音声・要求解像度・エラー無しの全フレームデコードを確認します。stdout の文字列だけは保存先と見なしません。`open` やファイルマネージャーから本人が MP4 を再生してください。
+公開項目は prompt / width / height / duration_seconds / steps / seed の6つだけです。プロンプトは英語で場面と音を書き、width / height は32の倍数、実機で生成成功を確認したサイズは768×448（横）と448×768（縦）、秒数は15までを運用目安にします。保存先は ComfyUI の出力ディレクトリの `minimax_h3/` です。seed 省略はプラグインでランダム化します。スモークで検証した呼出しは `comfyui_workflow`、`action: run`、ライブラリ id、parameters の5項目、`mode: sync`、`timeout_ms: 900000` です。dsh-comfyui 0.5.4 の timeout_ms は最小5000・上限3600000（60分）・既定900000（15分）です。長い動画はチャット側が先に終了しうる一方 ComfyUI は生成を継続します。長い生成には5秒なら1800000、15秒なら上限の3600000を明示し、再投入せず出力ディレクトリまたは実行履歴で完了を確認してください。900000を超えるtimeout_msを指定したチャット実行、async、リポジトリ版の登録項目によるチャット生成は未検証です（理由は検証記録）。
+
+verify は履歴を登録項目とリポジトリの両方へ直接照合し、照合相手（リポジトリのワークフロー・登録 id または登録項目なし）を表示します。履歴に ID が無ければ待たずに2です。実行中・待機中の可能性（完了後に再実行）、または ComfyUI の再起動で履歴が消えた可能性があります。再投入しないで、出力ディレクトリと ComfyUI の画面で状態を確認してください。履歴の公開値の型が不正ならその原因を表示して8です。構成・固定入力が片方でも異なれば外部コマンドを起動せず8です。公開6項目は履歴値を表示し、値差だけは不合格にしません。検査実行物は常にリポジトリの Save 固定入力の ffmpeg と同じ場所の ffprobe です。Save 出力の filename/subfolder/type から通常の MP4 を解決し、H.264 映像・AAC 音声・要求解像度・エラー無しの全フレームデコードを確認します。stdout の文字列だけは保存先と見なしません。`open` やファイルマネージャーから本人が MP4 を再生してください。
 
 ## 生成時間とメモリの指針
 
-2026-10-12 の対象機で生成を伴う実行の目安です。同じ入力の再投入はキャッシュで短くなることがあります。秒数指定と実フレーム数の一致は合否条件にしません。
+2026-10-12〜13 の対象機で生成を伴う実行の目安です。同じ入力の再投入はキャッシュで短くなることがあります。秒数指定と実フレーム数の一致は合否条件にしません。
 
 | 条件 | 結果・生成時間 | 動画 |
 | --- | --- | --- |
 | 直接 64×64 / 1秒 / steps=5 / seed=0 | 成功・約52秒（約1分） | H.264 24fps 39フレーム / AAC stereo 32kHz / 全デコード成功 |
-| 直接 768×448 / 5秒 / steps=9 / seed=42 | 成功・845秒（約14分） | H.264 124フレーム / AAC stereo / 全デコード成功 |
+| 直接 768×448 / 5秒 / steps=9 / seed=42 | 単独実行で成功・551.8秒（約9分）、Qwen応答とGPU共用で成功・845秒（約14分） | H.264 / AAC / 全デコード成功（共用実行は124フレーム・stereo） |
 | チャット同期スモーク | 成功・61秒、seed=3105209621 | H.264 64×64 39フレーム / AAC stereo / 全デコード成功 |
 | チャット 448×768 / 15秒 / steps=9 | ComfyUI 側完了・48分（長時間） | H.264 361フレーム / AAC stereo / 全デコード成功 |
 
@@ -211,4 +217,4 @@ PASS 行は `D-n PASS: 原因`、FAIL / UNKNOWN 行は `D-n 状態: 原因; 対�
 python3 -m unittest discover -s tests -v
 ```
 
-標準ライブラリの unittest / tempfile / mock でネットワーク・実サービス・GPU なしの検証を行います。PyYAML が無い場合は該当 YAML テストを理由付きでスキップし、実機合格には数えません。hub のインターフェースはスタブで検証します。実機結果は検証記録の LIVE レコードを参照してください。今回の修正差分の実機再実行・独立再レビューは orchestrator が別途実施します。
+標準ライブラリの unittest / tempfile / mock でネットワーク・実サービス・GPU なしの検証を行います。PyYAML が無い場合は該当 YAML テストを理由付きでスキップし、実機合格には数えません。hub のインターフェースはスタブで検証します。実機結果は検証記録の LIVE レコードを参照してください。

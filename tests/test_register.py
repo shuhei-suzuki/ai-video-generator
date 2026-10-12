@@ -1,6 +1,7 @@
 import argparse
 import copy
 import os
+from pathlib import Path
 import stat
 import uuid
 from unittest import mock
@@ -92,6 +93,33 @@ class RegisterTests(Case):
         path.symlink_to(source)
         self.raises_code(c, 2, r.register, args)
         self.assertEqual(source.read_text(), '[]')
+
+    def test_allowed_directory_links_refused_without_profile_changes(self):
+        allowed = Path.home() / '.dsh/data/dsh-comfyui'
+        profile = Path.home() / '.dsh/profiles/desktop'
+        write_json(profile / 'cordis.patch.yml', {'fixture': True})
+        write_json(profile / 'dsh-comfyui/workflows.json', [])
+        for link in (allowed, allowed.parent):
+            with self.subTest(link=link.name):
+                link.parent.mkdir(parents=True, exist_ok=True)
+                link.symlink_to(profile, target_is_directory=True)
+                try:
+                    before = {p.relative_to(profile): (p.read_bytes() if p.is_file() else None, p.stat())
+                              for p in [profile, *profile.rglob('*')]}
+                    args = argparse.Namespace(data_dir=str(allowed), ps=str(exec_file(self.root / 'ps')),
+                                              harness_process='fixture')
+                    with mock.patch.object(c, 'command', return_value=argparse.Namespace(stdout='')) as command, mock.patch.object(c, 'atomic_json') as atomic:
+                        self.raises_code(c, 2, r.register, args)
+                        command.assert_not_called()
+                        atomic.assert_not_called()
+                    after = {p.relative_to(profile): (p.read_bytes() if p.is_file() else None, p.stat())
+                             for p in [profile, *profile.rglob('*')]}
+                    self.assertEqual(after, before)
+                    self.assertTrue(link.is_symlink())
+                finally:
+                    link.unlink()
+                    if link == allowed:
+                        link.parent.rmdir()
 
     def test_atomic_change_and_replace_failure_preserve_original(self):
         path = self.root / 'workflows.json'

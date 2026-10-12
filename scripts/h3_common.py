@@ -148,7 +148,7 @@ def entity_relative(path, root):
     Walk the candidate's ancestors, never the protected root's ancestors.
     Missing root components use casefold as a conservative write boundary.
     """
-    anchor, rootstat, missing = existing_ancestor(root)
+    _, rootstat, missing = existing_ancestor(root)
     cursor, info, tail = existing_ancestor(path)
     parts = list(tail)
     while True:
@@ -171,6 +171,8 @@ def writable(path, library=False):
     """Protect Harness configuration, including aliases resolving into it."""
     home = Path.home() / '.dsh'
     allowed = home / 'data/dsh-comfyui'
+    if library and any(p.is_symlink() for p in (allowed.parent, allowed)):
+        fail(2, '書込先', '~/.dsh のライブラリ用ディレクトリのリンクは禁止', 'リンクを本人が確認')
     if inside(path, home):
         if not library or not any(entity_relative(path, p) == () for p in (allowed, allowed / 'workflows.json')):
             fail(2, '書込先', '~/.dsh の許可範囲外', '設定は本人が手で追記')

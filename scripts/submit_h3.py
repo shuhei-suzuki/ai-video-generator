@@ -38,7 +38,8 @@ def wait_history(base, prompt_id, deadline, http_timeout, poll, require_present=
             c.fail(6, '履歴', '応答構造不正', 'API を確認')
         entry = response.get(prompt_id)
         if entry is None and require_present:
-            c.fail(2, '履歴', '履歴に無い ID。ComfyUI の再起動で履歴は消える', '同じ起動中の prompt_id を確認')
+            c.fail(2, '履歴', '履歴に無い ID。実行中・待機中の可能性（完了後に再実行）、または ComfyUI の再起動で履歴が消えた',
+                   '再投入しない。出力ディレクトリと ComfyUI の画面で状態を確認')
         if entry is not None:
             if not isinstance(entry, dict) or not isinstance(entry.get('status'), dict):
                 c.fail(6, '履歴', '状態構造不正', '履歴を確認')
@@ -66,7 +67,6 @@ def verify_entry(entry, repository, registered, output_dir, command_timeout, sub
         c.compare_graph(actual, submitted)
         if any(actual['2']['inputs'][k] != submitted['2']['inputs'][k] for k in c.PUBLIC):
             c.fail(8, '履歴照合', '直接投入の公開値が不一致', '対象 prompt_id を確認')
-    values = {k: actual['2']['inputs'][k] for k in c.PUBLIC}
     print(c.display('履歴公開6項目: ' + c.json.dumps(values, ensure_ascii=False)))
     other = '登録項目 id=' + c.json.dumps(registered.get('id'), ensure_ascii=True) if registered is not None else '登録項目なし'
     print('履歴照合 PASS: ノード構成・固定入力 / リポジトリのワークフロー / ' + other)

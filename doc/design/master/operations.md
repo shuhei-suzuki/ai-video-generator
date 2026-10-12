@@ -12,7 +12,7 @@ manifest は schema=1、base/int8/turbo 各1件で、固定 repo/revision/includ
 
 未取得残量 R>0 の必要量は R+max(1GiB,ceil(R×5%))。最寄り既存親の配置先ボリュームで、作成前・後・各取得直前に空きを検査する。--test-free-bytes N は毎回 min(実測,N) を使う。R=0 は同意・容量・hub 読込なしで0。異常があれば同意前に5で原本を保持し、本人の退避後再実行を案内する。複数の同時取得は運用外である。model_summary はモデルごとの完了 N / 全 M 件と未完了ファイルを表示し、download/check_env/make_manifest の --verbose だけ全件を表示する。取得ループは1ファイル1行の取得 i/n・パス・サイズを表示し、容量表示は開始時と値の変化時だけ行う。容量検査は全確認地点で行う。
 
-ライブラリは ~/.dsh/data/dsh-comfyui/workflows.json に置く。register は id / name / description / workflow / parameters / tags / updatedAt を追加する。id は UUID4、parameters の id も UUID4、既定値は prompt がグラフの値、width=768、height=448、duration_seconds=5.0、steps=9、seed=0（random）、max は設けない。workflow はリポジトリのグラフそのままであり、グラフと直接 submit のスモーク既定値は変えない。既存 workflow 全体・parameters の id 以外・description・tags を今回登録する内容と比較して同内容はバイト不変0、相違は差分所在を表示し非変更5。本人がパネルで削除して再登録する。未知フィールド・他項目・順序・既存権限を保持する。既存項目のキー名と id は json.dumps でエスケープして表示する。英語2000字以内の description は MLX on Apple Silicon のステレオ音声付き text-to-video、comfyui_workflow action: run へ id と parameters を渡す同期実行、英語の場面と音、32倍数の幅・高さ、横768×448/縦448×768、15秒までの運用目安、所要時間より長い timeout_ms、同時1本、出力の minimax_h3/、モデルパスと ffmpeg_path の保持を案内する。起動中は警告し同時更新を保証しない。同じ親の一時ファイルを fsync し原本の stat/内容を再確認して replace する。新規ファイルは0600である。
+ライブラリは ~/.dsh/data/dsh-comfyui/workflows.json に置く。register は id / name / description / workflow / parameters / tags / updatedAt を追加する。id は UUID4、parameters の id も UUID4、既定値は prompt がグラフの値、width=768、height=448、duration_seconds=5.0、steps=9、seed=0（random）、max は設けない。workflow はリポジトリのグラフそのままであり、グラフと直接 submit のスモーク既定値は変えない。既存 workflow 全体・parameters の id 以外・description・tags を登録する内容と比較して同内容はバイト不変0、相違は差分所在を表示し非変更5。本人がパネルで削除して再登録する。未知フィールド・他項目・順序・既存権限を保持する。既存項目のキー名と id は json.dumps でエスケープして表示する。英語2000字以内の description は MLX on Apple Silicon のステレオ音声付き text-to-video、comfyui_workflow action: run へ id と parameters を渡す同期実行、英語の場面と音、32倍数の幅・高さ、横768×448/縦448×768、15秒までの運用目安、timeout_ms の上限3600000と5秒1800000/15秒3600000の指定、同時1本、出力の minimax_h3/、モデルパスと ffmpeg_path の保持を案内する。起動中は警告し同時更新を保証しない。同じ親の一時ファイルを fsync し原本の stat/内容を再確認して replace する。新規ファイルは0600である。
 
 Harness は ~/.dsh/profiles/desktop/cordis.patch.yml の llm-pi-ai / agent-default-model と ~/.dsh/.env の OLLAMA_API_KEY を使う。API は openai-completions、baseURL は http://127.0.0.1:11434/v1、モデルは qwen3.8:27b-mlx、contextWindow=65536、maxTokens=8192、input=[text,image]。設定例は手動追記専用である。
 
@@ -38,7 +38,7 @@ HTTP30秒（診断5秒）、poll2秒、生成全体7200秒、git/pip1800秒、�
 
 履歴の completed と実投入グラフを確認し、Save の minimax_h3_video の filename/subfolder/type=output から出力ルート内の通常 MP4 を解決する。両ストリーム H.264 / AAC、履歴の要求解像度、ffmpeg -nostdin -v error -xerror の全デコードを合否条件とする。フレーム数と指定秒数の一致は要求しない。ffmpeg は固定 Save 入力、ffprobe は同じディレクトリ由来であり、不在・実行不可の ffprobe は1、動画不合格は8、検査期限は7である。
 
-チャットは mode=sync を標準とし、5秒なら timeout_ms=1800000、15秒なら4200000を指定する。既定900000では長い生成がチャット側で先にタイムアウトしうる。ComfyUI は継続するため再投入せず出力・履歴を確認する。履歴は同じ ComfyUI 起動中に検査する。verify-history の ID が履歴に無ければ待たずに2、公開値の型不正は8で専用の原因を表示する。照合結果はリポジトリのワークフローと登録 id（または登録項目なし）を明示する。
+チャットは mode=sync を標準とし、5秒なら timeout_ms=1800000、15秒なら3600000を指定する。dsh-comfyui 0.5.4 の timeout_ms は最小5000・上限3600000・既定900000である。既定900000では長い生成がチャット側で先にタイムアウトしうる。ComfyUI は継続するため再投入せず出力・履歴を確認する。履歴は同じ ComfyUI 起動中に検査する。verify-history の ID が履歴に無ければ待たずに2で、実行中・待機中の可能性（完了後に再実行）と再起動による履歴消失を案内する。再投入せず出力ディレクトリと ComfyUI の画面で状態を確認する。公開値の型不正は8で専用の原因を表示する。照合結果はリポジトリのワークフローと登録 id（または登録項目なし）を明示する。
 
 実行時間・実機結果・開始状態・証跡・未確認範囲は [検証記録](../../verification/) を参照する。
 

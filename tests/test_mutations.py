@@ -29,7 +29,7 @@ MUTATIONS = [
     ('D-4不正ライブラリ', 'scripts/check_env.py', "    _, registered = c.read_library(data_dir / 'workflows.json')", "    try:\n        _, registered = c.read_library(data_dir / 'workflows.json')\n    except c.H3Error:\n        registered = None", 'test_check_env.py', 'test_d4_bad_library_fails_not_unregistered'),
     ('verify登録項目', 'scripts/submit_h3.py', '    if registered is not None:', '    if False:  # mutation: registration ignored', 'test_submit.py', 'test_verify_registered_and_repository_both_no_execution'),
     ('verify不正ライブラリ', 'scripts/submit_h3.py', "        _, registered = c.read_library(p['data_dir'] / 'workflows.json')", "        try:\n            _, registered = c.read_library(p['data_dir'] / 'workflows.json')\n        except c.H3Error:\n            registered = None", 'test_submit.py', 'test_verify_bad_library_never_fallback'),
-    ('実体を文字列比較へ戻す', 'scripts/h3_common.py', 'if os.path.samestat(info, rootstat):', 'if cursor == anchor:', 'test_review_fixes.py', 'test_mount_alias_identity_all_writers_preserve_original'),
+    ('実体を文字列比較へ戻す', 'scripts/h3_common.py', 'if os.path.samestat(info, rootstat):', 'if cursor == existing_ancestor(root)[0]:', 'test_review_fixes.py', 'test_mount_alias_identity_all_writers_preserve_original'),
     ('書込保護を外す', 'scripts/h3_common.py', 'if inside(path, home):', 'if False:', 'test_review_fixes.py', 'test_symlink_alias_all_writers_preserve_original'),
     ('未存在要素のcasefoldを外す', 'scripts/h3_common.py', 'tuple(p.casefold() for p in parts[:len(missing)]) == tuple(p.casefold() for p in missing)', 'tuple(parts[:len(missing)]) == missing', 'test_review_fixes.py', 'test_allowed_paths_missing_components_and_existing_case_distinction'),
     ('既存実体の大小を文字列許可', 'scripts/h3_common.py', 'if not library or not any(entity_relative(path, p) == () for p in (allowed, allowed / \'workflows.json\')):', 'if not library:', 'test_review_fixes.py', 'test_allowed_paths_missing_components_and_existing_case_distinction'),
@@ -62,6 +62,19 @@ MUTATIONS = [
     ('make verbose配線を外す', 'tools/make_manifest.py', 'c.model_summary(rows, args.verbose)', 'c.model_summary(rows, False)', 'test_review_fixes.py', 'test_verbose_reaches_all_summary_consumers'),
     ('診断verbose引数を捨てる', 'scripts/check_env.py', "p['verbose'] = args.verbose", "p['verbose'] = False", 'test_check_env.py', 'test_full_diagnostics_api_faults_individual'),
     ('追加cacheを必須件数へ混入', 'scripts/h3_common.py', '{len(model["files"])} 件', '{len(group)} 件', 'test_review_fixes.py', 'test_model_summary_verbose_and_pass_remedies'),
+    ('許可先ディレクトリリンクを許可', 'scripts/h3_common.py', '(allowed.parent, allowed)', '(allowed.parent,)', 'test_register.py', 'test_allowed_directory_links_refused_without_profile_changes'),
+    ('許可先の親リンクを許可', 'scripts/h3_common.py', '(allowed.parent, allowed)', '(allowed,)', 'test_register.py', 'test_allowed_directory_links_refused_without_profile_changes'),
+    ('15秒期限を短縮', 'scripts/register_dsh_workflow.py', '3600000 for 15 seconds', '900000 for 15 seconds', 'test_review_fixes.py', 'test_practical_defaults_graph_unchanged_and_agent_description'),
+    ('ツール上限を誤案内', 'scripts/register_dsh_workflow.py', 'timeout_ms maximum is 3600000', 'timeout_ms maximum is 1800000', 'test_review_fixes.py', 'test_practical_defaults_graph_unchanged_and_agent_description'),
+    ('長い期限の未検証を消す', 'scripts/register_dsh_workflow.py', 'Chat runs with these longer timeouts are unverified.', '', 'test_review_fixes.py', 'test_practical_defaults_graph_unchanged_and_agent_description'),
+    ('単独生成時間を誤案内', 'scripts/register_dsh_workflow.py', '9 minutes alone', '1 minute alone', 'test_review_fixes.py', 'test_practical_defaults_graph_unchanged_and_agent_description'),
+    ('共用生成時間を誤案内', 'scripts/register_dsh_workflow.py', '14 minutes sharing', '1 minute sharing', 'test_review_fixes.py', 'test_practical_defaults_graph_unchanged_and_agent_description'),
+    ('履歴不在で実行中の可能性を消す', 'scripts/submit_h3.py', '実行中・待機中の可能性（完了後に再実行）', '完了していない', 'test_review_fixes.py', 'test_missing_verify_id_fails_immediately'),
+    ('履歴不在で再投入を案内', 'scripts/submit_h3.py', '再投入しない。出力ディレクトリと ComfyUI の画面で状態を確認', '再投入する', 'test_review_fixes.py', 'test_missing_verify_id_fails_immediately'),
+    ('スモーク検証範囲を消す', 'README.md', '試作版の登録項目で実機で確認した呼び出し。', '', 'test_review_fixes.py', 'test_chat_examples_distinguish_verified_calls_and_generation_conditions'),
+    ('5秒チャットの未検証を消す', 'README.md', '直接投入で実機で成功を確認済み。この timeout_ms を指定したチャット実行は未検証です。', '直接投入で実機で成功を確認済み。', 'test_review_fixes.py', 'test_chat_examples_distinguish_verified_calls_and_generation_conditions'),
+    ('15秒チャットの未検証を消す', 'README.md', '（チャット経由で timeout_ms=900000 のまま ComfyUI 側の完了を確認）。この timeout_ms を指定したチャット実行は未検証です。', '（チャット経由で timeout_ms=900000 のまま ComfyUI 側の完了を確認）。', 'test_review_fixes.py', 'test_chat_examples_distinguish_verified_calls_and_generation_conditions'),
+    ('15秒指示例の期限を誤案内', 'README.md', 'timeout_ms は上限の 3600000', 'timeout_ms は1800000', 'test_review_fixes.py', 'test_chat_examples_distinguish_verified_calls_and_generation_conditions'),
 ]
 
 
@@ -76,6 +89,7 @@ class MutationTests(unittest.TestCase):
                     for directory in ('scripts', 'tools', 'config', 'workflows', 'tests'):
                         shutil.copytree(ROOT / directory, root / directory,
                                         ignore=shutil.ignore_patterns('__pycache__', '*.pyc'))
+                    shutil.copyfile(ROOT / 'README.md', root / 'README.md')
                     target = root / file
                     text = target.read_text(encoding='utf-8')
                     self.assertEqual(text.count(before), 1, (name, 'ambiguous mutation'))
@@ -85,8 +99,9 @@ class MutationTests(unittest.TestCase):
                                              timeout=30, shell=False, stdin=subprocess.DEVNULL)
                     self.assertEqual(control.returncode, 0, (name, control.stdout + control.stderr))
                     target.write_text(text.replace(before, after, 1), encoding='utf-8')
-                    # Reject syntax-invalid mutants BEFORE running any test.
-                    compile(target.read_text(), file, 'exec')
+                    # Reject syntax-invalid Python mutants BEFORE running any test.
+                    if target.suffix == '.py':
+                        compile(target.read_text(), file, 'exec')
                     result = subprocess.run([sys.executable, '-B', '-m', 'unittest', 'discover',
                                              '-s', 'tests', '-p', testfile, '-k', testname, '-v'],
                                             cwd=root, capture_output=True, text=True, timeout=30, shell=False, stdin=subprocess.DEVNULL)
