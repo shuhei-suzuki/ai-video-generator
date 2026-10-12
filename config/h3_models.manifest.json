@@ -1,0 +1,590 @@
+{
+  "schema": 1,
+  "models": [
+    {
+      "key": "base",
+      "repo": "MiniMaxAI/MiniMax-H3",
+      "revision": "42ed227ee7df40d41602854ae760620d6eb651fe",
+      "local_dir": "MiniMax-H3",
+      "include": [
+        "FL2VA/model_index.json",
+        "FL2VA/tokenizer/**",
+        "FL2VA/processor/**",
+        "FL2VA/text_encoder/**",
+        "FL2VA/video_vae/**",
+        "FL2VA/audio_vae/**"
+      ],
+      "total_bytes": 77770657762,
+      "files": [
+        {
+          "path": "FL2VA/audio_vae/config.json",
+          "size": 1973
+        },
+        {
+          "path": "FL2VA/audio_vae/config.yaml",
+          "size": 91
+        },
+        {
+          "path": "FL2VA/audio_vae/dac_activations.py",
+          "size": 2189
+        },
+        {
+          "path": "FL2VA/audio_vae/dac_alias_free_act.py",
+          "size": 835
+        },
+        {
+          "path": "FL2VA/audio_vae/dac_alias_free_filter.py",
+          "size": 3300
+        },
+        {
+          "path": "FL2VA/audio_vae/dac_alias_free_resample.py",
+          "size": 1740
+        },
+        {
+          "path": "FL2VA/audio_vae/dac_attn_proj.py",
+          "size": 3317
+        },
+        {
+          "path": "FL2VA/audio_vae/dac_audio_vae.py",
+          "size": 7266
+        },
+        {
+          "path": "FL2VA/audio_vae/dac_bigvgan.py",
+          "size": 7102
+        },
+        {
+          "path": "FL2VA/audio_vae/dac_utils.py",
+          "size": 362
+        },
+        {
+          "path": "FL2VA/audio_vae/metadata.json",
+          "size": 440
+        },
+        {
+          "path": "FL2VA/audio_vae/minimax_h3_audio_vae.py",
+          "size": 3532
+        },
+        {
+          "path": "FL2VA/audio_vae/model.safetensors",
+          "size": 605429308
+        },
+        {
+          "path": "FL2VA/model_index.json",
+          "size": 719
+        },
+        {
+          "path": "FL2VA/processor/chat_template.json",
+          "size": 5499
+        },
+        {
+          "path": "FL2VA/processor/merges.txt",
+          "size": 1671839
+        },
+        {
+          "path": "FL2VA/processor/preprocessor_config.json",
+          "size": 390
+        },
+        {
+          "path": "FL2VA/processor/tokenizer.json",
+          "size": 7032403
+        },
+        {
+          "path": "FL2VA/processor/tokenizer_config.json",
+          "size": 11003
+        },
+        {
+          "path": "FL2VA/processor/video_preprocessor_config.json",
+          "size": 385
+        },
+        {
+          "path": "FL2VA/processor/vocab.json",
+          "size": 2776833
+        },
+        {
+          "path": "FL2VA/text_encoder/chat_template.json",
+          "size": 5499
+        },
+        {
+          "path": "FL2VA/text_encoder/config.json",
+          "size": 1474
+        },
+        {
+          "path": "FL2VA/text_encoder/merges.txt",
+          "size": 1671839
+        },
+        {
+          "path": "FL2VA/text_encoder/model-00001-of-00014.safetensors",
+          "size": 4932328944
+        },
+        {
+          "path": "FL2VA/text_encoder/model-00002-of-00014.safetensors",
+          "size": 4875990528
+        },
+        {
+          "path": "FL2VA/text_encoder/model-00003-of-00014.safetensors",
+          "size": 4875990552
+        },
+        {
+          "path": "FL2VA/text_encoder/model-00004-of-00014.safetensors",
+          "size": 4875990584
+        },
+        {
+          "path": "FL2VA/text_encoder/model-00005-of-00014.safetensors",
+          "size": 4875990584
+        },
+        {
+          "path": "FL2VA/text_encoder/model-00006-of-00014.safetensors",
+          "size": 4875990584
+        },
+        {
+          "path": "FL2VA/text_encoder/model-00007-of-00014.safetensors",
+          "size": 4875990584
+        },
+        {
+          "path": "FL2VA/text_encoder/model-00008-of-00014.safetensors",
+          "size": 4875990584
+        },
+        {
+          "path": "FL2VA/text_encoder/model-00009-of-00014.safetensors",
+          "size": 4875990584
+        },
+        {
+          "path": "FL2VA/text_encoder/model-00010-of-00014.safetensors",
+          "size": 4875990584
+        },
+        {
+          "path": "FL2VA/text_encoder/model-00011-of-00014.safetensors",
+          "size": 4875990584
+        },
+        {
+          "path": "FL2VA/text_encoder/model-00012-of-00014.safetensors",
+          "size": 4875990584
+        },
+        {
+          "path": "FL2VA/text_encoder/model-00013-of-00014.safetensors",
+          "size": 4875990584
+        },
+        {
+          "path": "FL2VA/text_encoder/model-00014-of-00014.safetensors",
+          "size": 3270697008
+        },
+        {
+          "path": "FL2VA/text_encoder/model.safetensors.index.json",
+          "size": 97831
+        },
+        {
+          "path": "FL2VA/text_encoder/preprocessor_config.json",
+          "size": 390
+        },
+        {
+          "path": "FL2VA/text_encoder/tokenizer.json",
+          "size": 7032403
+        },
+        {
+          "path": "FL2VA/text_encoder/tokenizer_config.json",
+          "size": 11003
+        },
+        {
+          "path": "FL2VA/text_encoder/video_preprocessor_config.json",
+          "size": 385
+        },
+        {
+          "path": "FL2VA/text_encoder/vocab.json",
+          "size": 2776833
+        },
+        {
+          "path": "FL2VA/tokenizer/merges.txt",
+          "size": 1671839
+        },
+        {
+          "path": "FL2VA/tokenizer/tokenizer.json",
+          "size": 7032403
+        },
+        {
+          "path": "FL2VA/tokenizer/tokenizer_config.json",
+          "size": 11003
+        },
+        {
+          "path": "FL2VA/tokenizer/vocab.json",
+          "size": 2776833
+        },
+        {
+          "path": "FL2VA/video_vae/attention.py",
+          "size": 5785
+        },
+        {
+          "path": "FL2VA/video_vae/base_module.py",
+          "size": 9520
+        },
+        {
+          "path": "FL2VA/video_vae/config.json",
+          "size": 1807
+        },
+        {
+          "path": "FL2VA/video_vae/conv.py",
+          "size": 4487
+        },
+        {
+          "path": "FL2VA/video_vae/flash.py",
+          "size": 5763
+        },
+        {
+          "path": "FL2VA/video_vae/func.py",
+          "size": 5840
+        },
+        {
+          "path": "FL2VA/video_vae/klvae.py",
+          "size": 48594
+        },
+        {
+          "path": "FL2VA/video_vae/minimax_h3_video_vae.py",
+          "size": 5123
+        },
+        {
+          "path": "FL2VA/video_vae/norm.py",
+          "size": 10686
+        },
+        {
+          "path": "FL2VA/video_vae/normalize.py",
+          "size": 1200
+        },
+        {
+          "path": "FL2VA/video_vae/parallel.py",
+          "size": 12997
+        },
+        {
+          "path": "FL2VA/video_vae/source/config.json",
+          "size": 1164
+        },
+        {
+          "path": "FL2VA/video_vae/source/model.safetensors",
+          "size": 10415548320
+        },
+        {
+          "path": "FL2VA/video_vae/utils.py",
+          "size": 764
+        },
+        {
+          "path": "FL2VA/video_vae/vae_cnn.py",
+          "size": 8836
+        },
+        {
+          "path": "FL2VA/video_vae/vae_module.py",
+          "size": 1884
+        },
+        {
+          "path": "FL2VA/video_vae/vae_processor.py",
+          "size": 8369
+        },
+        {
+          "path": "FL2VA/video_vae/vae_vit.py",
+          "size": 13490
+        }
+      ]
+    },
+    {
+      "key": "int8",
+      "repo": "water1234/MiniMax-H3-MLX-Argus-Calibrated-INT8",
+      "revision": "70505b09c80e298e684d798d8e0f946937dcfad4",
+      "local_dir": "MiniMax-H3-MLX-Argus-Calibrated-INT8",
+      "include": [
+        "**"
+      ],
+      "total_bytes": 37797145373,
+      "files": [
+        {
+          "path": "LICENSE",
+          "size": 17604
+        },
+        {
+          "path": "README.md",
+          "size": 2720
+        },
+        {
+          "path": "config.json",
+          "size": 604
+        },
+        {
+          "path": "model-00001-of-00008.safetensors",
+          "size": 5345568851
+        },
+        {
+          "path": "model-00002-of-00008.safetensors",
+          "size": 5349483016
+        },
+        {
+          "path": "model-00003-of-00008.safetensors",
+          "size": 5272413031
+        },
+        {
+          "path": "model-00004-of-00008.safetensors",
+          "size": 5358127869
+        },
+        {
+          "path": "model-00005-of-00008.safetensors",
+          "size": 5349483010
+        },
+        {
+          "path": "model-00006-of-00008.safetensors",
+          "size": 5272412252
+        },
+        {
+          "path": "model-00007-of-00008.safetensors",
+          "size": 5336807607
+        },
+        {
+          "path": "model-00008-of-00008.safetensors",
+          "size": 512733582
+        },
+        {
+          "path": "model.safetensors.index.json",
+          "size": 84223
+        },
+        {
+          "path": "quant_config.json",
+          "size": 11004
+        }
+      ]
+    },
+    {
+      "key": "turbo",
+      "repo": "water1234/MiniMax-H3-Turbo-v4-step600-EMA-MLX",
+      "revision": "9771f9c606a50671bb94ee57191461602f02d1fc",
+      "local_dir": "MiniMax-H3-Turbo-v4-step600-EMA-MLX",
+      "include": [
+        "**"
+      ],
+      "total_bytes": 1559967577,
+      "files": [
+        {
+          "path": "README.md",
+          "size": 3056
+        },
+        {
+          "path": "adapter.safetensors.index.json",
+          "size": 43550
+        },
+        {
+          "path": "conversion_manifest.json",
+          "size": 202688
+        },
+        {
+          "path": "shards/adapter-block-000.safetensors",
+          "size": 15111589
+        },
+        {
+          "path": "shards/adapter-block-001.safetensors",
+          "size": 15111583
+        },
+        {
+          "path": "shards/adapter-block-002.safetensors",
+          "size": 15111589
+        },
+        {
+          "path": "shards/adapter-block-003.safetensors",
+          "size": 15111587
+        },
+        {
+          "path": "shards/adapter-block-004.safetensors",
+          "size": 15111589
+        },
+        {
+          "path": "shards/adapter-block-005.safetensors",
+          "size": 15111587
+        },
+        {
+          "path": "shards/adapter-block-006.safetensors",
+          "size": 15111587
+        },
+        {
+          "path": "shards/adapter-block-007.safetensors",
+          "size": 15111589
+        },
+        {
+          "path": "shards/adapter-block-008.safetensors",
+          "size": 15111587
+        },
+        {
+          "path": "shards/adapter-block-009.safetensors",
+          "size": 15111587
+        },
+        {
+          "path": "shards/adapter-block-010.safetensors",
+          "size": 15111597
+        },
+        {
+          "path": "shards/adapter-block-011.safetensors",
+          "size": 15111597
+        },
+        {
+          "path": "shards/adapter-block-012.safetensors",
+          "size": 15111597
+        },
+        {
+          "path": "shards/adapter-block-013.safetensors",
+          "size": 15111597
+        },
+        {
+          "path": "shards/adapter-block-014.safetensors",
+          "size": 15111593
+        },
+        {
+          "path": "shards/adapter-block-015.safetensors",
+          "size": 15111597
+        },
+        {
+          "path": "shards/adapter-block-016.safetensors",
+          "size": 15111597
+        },
+        {
+          "path": "shards/adapter-block-017.safetensors",
+          "size": 15111595
+        },
+        {
+          "path": "shards/adapter-block-018.safetensors",
+          "size": 15111597
+        },
+        {
+          "path": "shards/adapter-block-019.safetensors",
+          "size": 15111599
+        },
+        {
+          "path": "shards/adapter-block-020.safetensors",
+          "size": 15111597
+        },
+        {
+          "path": "shards/adapter-block-021.safetensors",
+          "size": 15111599
+        },
+        {
+          "path": "shards/adapter-block-022.safetensors",
+          "size": 15111597
+        },
+        {
+          "path": "shards/adapter-block-023.safetensors",
+          "size": 15111597
+        },
+        {
+          "path": "shards/adapter-block-024.safetensors",
+          "size": 15111597
+        },
+        {
+          "path": "shards/adapter-block-025.safetensors",
+          "size": 15111597
+        },
+        {
+          "path": "shards/adapter-block-026.safetensors",
+          "size": 15111597
+        },
+        {
+          "path": "shards/adapter-block-027.safetensors",
+          "size": 15111599
+        },
+        {
+          "path": "shards/adapter-block-028.safetensors",
+          "size": 15111599
+        },
+        {
+          "path": "shards/adapter-block-029.safetensors",
+          "size": 15111597
+        },
+        {
+          "path": "shards/adapter-block-030.safetensors",
+          "size": 15111595
+        },
+        {
+          "path": "shards/adapter-block-031.safetensors",
+          "size": 15111599
+        },
+        {
+          "path": "shards/adapter-block-032.safetensors",
+          "size": 15111599
+        },
+        {
+          "path": "shards/adapter-block-033.safetensors",
+          "size": 15111597
+        },
+        {
+          "path": "shards/adapter-block-034.safetensors",
+          "size": 15111597
+        },
+        {
+          "path": "shards/adapter-block-035.safetensors",
+          "size": 15111599
+        },
+        {
+          "path": "shards/adapter-block-036.safetensors",
+          "size": 15111595
+        },
+        {
+          "path": "shards/adapter-block-037.safetensors",
+          "size": 15111597
+        },
+        {
+          "path": "shards/adapter-block-038.safetensors",
+          "size": 15111597
+        },
+        {
+          "path": "shards/adapter-block-039.safetensors",
+          "size": 15111595
+        },
+        {
+          "path": "shards/adapter-block-040.safetensors",
+          "size": 15111595
+        },
+        {
+          "path": "shards/adapter-block-041.safetensors",
+          "size": 15111597
+        },
+        {
+          "path": "shards/adapter-block-042.safetensors",
+          "size": 15111599
+        },
+        {
+          "path": "shards/adapter-block-043.safetensors",
+          "size": 15111599
+        },
+        {
+          "path": "shards/adapter-block-044.safetensors",
+          "size": 15111595
+        },
+        {
+          "path": "shards/adapter-block-045.safetensors",
+          "size": 15111595
+        },
+        {
+          "path": "shards/adapter-block-046.safetensors",
+          "size": 15111593
+        },
+        {
+          "path": "shards/adapter-block-047.safetensors",
+          "size": 15111595
+        },
+        {
+          "path": "shards/adapter-block-048.safetensors",
+          "size": 15111599
+        },
+        {
+          "path": "shards/adapter-block-049.safetensors",
+          "size": 15111599
+        },
+        {
+          "path": "shards/adapter-final-000.safetensors",
+          "size": 430684
+        },
+        {
+          "path": "shards/adapter-refiner-000.safetensors",
+          "size": 11928880
+        },
+        {
+          "path": "shards/adapter-refiner-001.safetensors",
+          "size": 11928882
+        },
+        {
+          "path": "turbo_lora.safetensors",
+          "size": 779850085
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,47 @@
+# 運用契約
+
+## 配置と起動
+
+インスタンスは ~/ComfyUI-Installs/ComfyUI、本体はその下の ComfyUI、venv は本体直下の .venv、モデルは ~/ComfyUI-Shared/models/minimax_h3、出力は ~/ComfyUI-Shared/output である。共通 resolver は CLI 明示指定を優先し、別インスタンスを推測しない。実行は venv/bin/python -I、Python 3.11以上であり、共通モジュールを importlib で明示ロードする。
+
+手動導入・初回 GUI・ライセンス原文・例外承諾・Qwen pull・既存項目を保持する設定追記は README の手順で利用者本人が行う。スクリプトは管理者権限を要求しない。install の実行物指定は --venv と --git のみである。download の取得時だけ既存 hub>=1.0、check_env の YAML 診断だけ既存 PyYAML を使う。
+
+## データ形式・非変更再実行
+
+manifest は schema=1、base/int8/turbo 各1件で、固定 repo/revision/include/local_dir と files の相対POSIXパス・非負整数サイズ・total_bytes の合計を検査する。モデルは通常ファイルの存在とバイト一致で完了、欠落は未取得、過小サイズまたは cache/download の .incomplete は途中、過大サイズは不一致である。余分な通常ファイルを保持し、途中データは優先して拒否する。完了済みは再取得しない。同サイズ改変の完全性は保証しない。
+
+未取得残量 R>0 の必要量は R+max(1GiB,ceil(R×5%))。最寄り既存親の配置先ボリュームで、作成前・後・各取得直前に空きを検査する。--test-free-bytes N は毎回 min(実測,N) を使う。R=0 は同意・容量・hub 読込なしで0。異常があれば同意前に5で原本を保持し、本人の退避後再実行を案内する。複数の同時取得は運用外である。
+
+ライブラリは ~/.dsh/data/dsh-comfyui/workflows.json に置く。register は id / name / description / workflow / parameters / tags / updatedAt を追加する。id は UUID4、parameters の id も UUID4、既定値は固定グラフ由来、max は設けない。既存 workflow 全体と parameters の id 以外を比較して同内容はバイト不変0、相違は差分所在を表示し非変更5。本人がパネルで削除して再登録する。未知フィールド・他項目・順序・既存権限を保持する。起動中は警告し同時更新を保証しない。同じ親の一時ファイルを fsync し原本の stat/内容を再確認して replace する。新規ファイルは0600である。
+
+Harness は ~/.dsh/profiles/desktop/cordis.patch.yml の llm-pi-ai / agent-default-model と ~/.dsh/.env の OLLAMA_API_KEY を使う。API は openai-completions、baseURL は http://127.0.0.1:11434/v1、モデルは qwen3.8:27b-mlx、contextWindow=65536、maxTokens=8192、input=[text,image]。設定例は手動追記専用である。
+
+## 診断と期限
+
+| ID | 検査対象 |
+| --- | --- |
+| D-1 | /system_stats 応答 |
+| D-2 | 4クラスの個別 /object_info |
+| D-3 | 共通一覧の全件・途中判定とモデル入口の実体一致 |
+| D-4 | リポジトリと登録 Save ffmpeg の絶対パス・実行可否・値一致。ffprobe 有無は補足 |
+| D-5 | Ollama /api/tags と Qwen |
+| D-6 | 指定 profile の必要設定・対象キーの非空存在（値非表示） |
+| D-7 | 同じ profile の node_modules/dsh-comfyui/package.json の name と version=0.5.4 |
+| D-8 | URL ポート所有 PID と同グループの子の全 TCP LISTEN |
+| D-9 | 完全名 Harness と子・複数一致の和集合の全 TCP LISTEN |
+
+未登録だけは D-4 でリポジトリを検査する。不正 JSON・非リスト・対象名重複は FAIL、verify は2であり未登録に代替しない。診断は最後まで PASS/FAIL/UNKNOWN と対処を表示する。一つでも FAIL/UNKNOWN なら1。ps/lsof の解析不能・持ち主不在・待受無しは UNKNOWN。UDP は未確認である。
+
+HTTP30秒（診断5秒）、poll2秒、生成全体7200秒、git/pip1800秒、動画検査各300秒を既定とする。指定は正の有限値である。生成中のHTTPは全体残り期限以下を使う。hub の個別大容量転送には全体期限を設けない。
+
+## 保存・再生検査と生成条件
+
+履歴の completed と実投入グラフを確認し、Save の minimax_h3_video の filename/subfolder/type=output から出力ルート内の通常 MP4 を解決する。両ストリーム H.264 / AAC、履歴の要求解像度、ffmpeg -v error -xerror の全デコードを合否条件とする。フレーム数と指定秒数の一致は要求しない。ffmpeg は固定 Save 入力、ffprobe は同じディレクトリ由来であり、不在・実行不可の ffprobe は1、動画不合格は8、検査期限は7である。
+
+同期チャットは mode=sync / timeout_ms=900000 を使用し、長い生成はチャットが先にタイムアウトしうる。ComfyUI は継続するため再投入せず出力・履歴を確認する。履歴は同じ ComfyUI 起動中に検査する。async の動作は未検証である。
+
+対象機の生成を伴う目安はスモーク64×64・1秒・steps5で約52秒、768×448・5秒・steps9・seed42で845秒、チャットスモークで61秒、448×768・15秒・steps9で48分である。H.264/AAC と全デコードの成功は手作業・試作の対象機記録である。新規CLIの実機実行は未検証である。
+
+128GBでも併用を無条件保証しない。INT8約38GB、text encoder約67GBのストリーミング、Qwen約20〜21GB、当該機の Ollama 既定文脈262144を踏まえ、必要な文脈へ削減・モデル解放・同時生成1件から確認する。チャット前後の空き率40〜60%、15秒生成中41〜44%は他条件の保証ではない。
+
+終了コードは0成功、1失敗/確認不能、2入力不正、3未同意、4容量不足、5競合、6外部処理失敗、7期限超過、8動画/履歴不合格。pip 期限超過は途中変更の可能性を表示し本人の pip check を案内する。

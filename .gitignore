@@ -1,0 +1,9 @@
+worktree/
+__pycache__/
+*.py[cod]
+.DS_Store
+.venv/
+.env
+*.safetensors
+*.mp4
+*.wav
