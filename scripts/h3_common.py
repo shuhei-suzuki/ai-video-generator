@@ -387,9 +387,12 @@ def request_json(url, payload=None, timeout=30):
     worker = threading.Thread(target=exchange, daemon=True)
     worker.start()
     worker.join(timeout)
+    if worker.is_alive():
+        fail(6, 'HTTP', '無応答・拒否・不正 JSON', 'API 起動・指定 URL・要求を確認（応答本文は非表示）')
+    # Read the outcome only after the worker is known to have finished: reading it first
+    # could miss an error stored between that read and the liveness check.
     error = outcome.get('error')
-    transport = (urllib.error.URLError, http.client.HTTPException, OSError)
-    if worker.is_alive() or isinstance(error, transport):
+    if isinstance(error, (urllib.error.URLError, http.client.HTTPException, OSError)):
         fail(6, 'HTTP', '無応答・拒否・不正 JSON', 'API 起動・指定 URL・要求を確認（応答本文は非表示）')
     if error is not None:
         raise error

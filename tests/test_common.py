@@ -184,6 +184,40 @@ class CommonTests(Case):
         truncated_chunk = b'HTTP/1.1 200 OK\r\nTransfer-Encoding: chunked\r\n\r\n12\r\n{"prompt_id":"id"}'
         self.raises_code(c, 6, self.request_with, lambda: self.real_response(truncated_chunk))
 
+    def test_http_outcome_is_read_only_after_the_worker_finished(self):
+        # Deterministic stand-in for the race: the worker stores its error exactly while the
+        # caller checks liveness. The error must still be classified (6), never lost.
+        class FinishingAtLivenessCheck:
+            def __init__(self, target, daemon):
+                self.target = target
+
+            def start(self):
+                pass
+
+            def join(self, timeout=None):
+                pass
+
+            def is_alive(self):
+                self.target()
+                return False
+
+        for error in (c.http.client.IncompleteRead(b'SECRET_MARKER'), c.urllib.error.URLError('SECRET_MARKER'),
+                      ConnectionResetError('SECRET_MARKER')):
+            opener = mock.Mock()
+            opener.open.side_effect = error
+            with mock.patch.object(c.urllib.request, 'build_opener', return_value=opener), \
+                    mock.patch.object(c.threading, 'Thread', FinishingAtLivenessCheck):
+                self.raises_code(c, 6, c.request_json, 'http://127.0.0.1:1')
+        # Same timing with a successful body: the result is returned, not dropped.
+        opener = mock.Mock()
+        response = mock.MagicMock()
+        response.__enter__.return_value.read.return_value = b'{"ok": true}'
+        opener.open.return_value = response
+        with mock.patch.object(c.urllib.request, 'build_opener', return_value=opener), \
+                mock.patch.object(c.threading, 'Thread', FinishingAtLivenessCheck):
+            self.assertEqual(c.request_json('http://127.0.0.1:1'), {'ok': True})
+        self.assertNotIn('SECRET_MARKER', self.error.getvalue())
+
     def test_http_invalid_json_body_is_an_http_failure(self):
         # A complete response that is not JSON is an API failure (6), not an input error (2).
         for body in (b'<html>SECRET_MARKER</html>', b'NaN', b''):
