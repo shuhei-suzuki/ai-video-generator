@@ -93,6 +93,15 @@ class DocumentationTests(Case):
                                    capture_output=True, text=True, timeout=30)
             self.assertEqual(result.returncode, 0, result.stderr)
             self.assertIn('usage:', result.stdout)
+            # --help is the reference for defaults: every option line that has one shows it.
+            expected = {'scripts/submit_h3.py': ('（既定: 7200', '（既定: 64）', '（既定: 0）', 'http://127.0.0.1:8188'),
+                        'scripts/check_env.py': ('http://127.0.0.1:11434/v1', '~/.dsh/profiles/desktop', '（既定: 5'),
+                        'scripts/install_h3_node.py': ('（既定: 1800',),
+                        'scripts/download_h3_models.py': ('（既定: base int8 turbo）',),
+                        'scripts/register_dsh_workflow.py': ('DeepSeek Harness',),
+                        'tools/make_manifest.py': ('（既定: 30',)}[file]
+            for text in expected:
+                self.assertIn(text, result.stdout, file)
 
     def test_old_executable_flags_not_accepted(self):
         for name in ['install_h3_node', 'submit_h3', 'register_dsh_workflow']:

@@ -131,6 +131,71 @@ class SubmitTests(Case):
             self.assertEqual(sent['1'], graph['1'])
             self.assertEqual(sent['3'], graph['3'])
 
+    def submit_with(self, graph, history, args=None, **extra):
+        """Run submit() end to end with stubbed HTTP; returns (callable, inspect mock context)."""
+        args = args or self.args()
+        responses = [{'id': history}] if args.verify_history else [dict(prompt_id='id'), {'id': history}]
+        return (mock.patch.object(c, 'load_graph', return_value=graph),
+                mock.patch.object(c, 'request_json', side_effect=responses))
+
+    def test_submit_reaches_history_output_and_video_checks(self):
+        # Guards the wiring: submit() must not return before the final verification.
+        graph = self.setup_graph()
+        good = self.entry(graph)
+        good['prompt'][2]['2']['inputs']['prompt'] = self.args().prompt
+        load, request = self.submit_with(graph, good)
+        with load, request, mock.patch.object(c, 'inspect_video') as inspect:
+            self.assertEqual(s.submit(self.args()), 0)
+            inspect.assert_called_once()
+            self.assertEqual(inspect.call_args.args[1:3], (64, 64))
+            self.assertEqual(inspect.call_args.args[3], graph)
+
+        fixed_changed = copy.deepcopy(good)
+        fixed_changed['prompt'][2]['3']['inputs']['crf'] = 1
+        public_changed = copy.deepcopy(good)
+        public_changed['prompt'][2]['2']['inputs']['seed'] = 7
+        video_missing = copy.deepcopy(good)
+        video_missing['outputs']['3']['minimax_h3_video'][0]['filename'] = 'missing.mp4'
+        for history in (fixed_changed, public_changed, video_missing):
+            load, request = self.submit_with(graph, history)
+            with load, request, mock.patch.object(c, 'inspect_video') as inspect, mock.patch.object(c, 'command') as command:
+                self.raises_code(c, 8, s.submit, self.args())
+                inspect.assert_not_called()
+                command.assert_not_called()
+
+        load, request = self.submit_with(graph, good)
+        with load, request, mock.patch.object(c, 'inspect_video', side_effect=c.H3Error(8, '動画', '不合格', '確認')):
+            self.raises_code(c, 8, s.submit, self.args())
+
+    def test_verify_history_passes_the_registered_entry_through_submit(self):
+        # Guards the wiring from read_library() to the comparison inside submit().
+        graph = self.setup_graph()
+        history = self.entry(graph)
+        args = self.args(verify_history='id')
+        library = self.root / 'data/workflows.json'
+        same = dict(id='a', name=c.NAME, workflow=copy.deepcopy(graph))
+        write_json(library, [same])
+        load, request = self.submit_with(graph, history, args)
+        with load, request, mock.patch.object(c, 'inspect_video') as inspect:
+            self.assertEqual(s.submit(args), 0)
+            inspect.assert_called_once()
+
+        different = copy.deepcopy(same)
+        different['workflow']['1']['inputs']['memory_limit_gb'] = 1.0
+        write_json(library, [different])
+        load, request = self.submit_with(graph, history, args)
+        with load, request, mock.patch.object(c, 'inspect_video') as inspect, mock.patch.object(c, 'command') as command:
+            self.raises_code(c, 8, s.submit, args)
+            inspect.assert_not_called()
+            command.assert_not_called()
+
+    def test_history_request_cut_by_the_deadline_is_a_timeout(self):
+        failure = c.H3Error(6, 'HTTP', '無応答', '確認')
+        with mock.patch.object(s.time, 'monotonic', side_effect=[0, 10]), mock.patch.object(c, 'request_json', side_effect=failure):
+            self.raises_code(c, 7, s.wait_history, 'http://127.0.0.1:1', 'id', 5, 30, 2)
+        with mock.patch.object(s.time, 'monotonic', side_effect=[0, 1]), mock.patch.object(c, 'request_json', side_effect=failure):
+            self.raises_code(c, 6, s.wait_history, 'http://127.0.0.1:1', 'id', 5, 30, 2)
+
     def test_submit_post_rejection_node_errors(self):
         graph = self.setup_graph()
         for response in (dict(node_errors={'x': 'SECRET'}), dict(error='SECRET'), {}, []):

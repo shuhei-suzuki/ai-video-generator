@@ -80,7 +80,7 @@ def main():
     c.add_paths(parser, ('data_dir',))
     parser.add_argument('--harness-process', default='DeepSeek Harness', help='既定: DeepSeek Harness（完全名）')
     parser.add_argument('--ps', default='ps', help='既定: PATH から絶対パス解決')
-    return register(parser.parse_args())
+    return register(c.parse(parser))
 
 
 if __name__ == '__main__':

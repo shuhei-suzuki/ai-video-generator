@@ -3,6 +3,7 @@ import copy
 import json
 import os
 from pathlib import Path
+import sys
 from unittest import mock
 from support import Case, ROOT, load, fixture_manifest, exec_file, write_json
 
@@ -102,7 +103,7 @@ class CommonTests(Case):
     def test_http_proxy_redirect_and_secret_errors(self):
         opener = mock.Mock()
         response = mock.MagicMock()
-        response.__enter__.return_value.read.return_value = b'{"ok": true}'
+        response.__enter__.return_value.read1.side_effect = [b'{"ok":', b' true}', b'']
         opener.open.return_value = response
         with mock.patch.object(c.urllib.request, 'build_opener', return_value=opener) as build:
             self.assertEqual(c.request_json('http://127.0.0.1:1'), {'ok': True})
@@ -111,6 +112,60 @@ class CommonTests(Case):
             opener.open.side_effect = c.urllib.error.URLError('SECRET_MARKER')
             self.assertEqual(c.cli(lambda: c.request_json('http://127.0.0.1:1')), 6)
         self.assertNotIn('SECRET_MARKER', self.error.getvalue())
+
+    def test_http_protocol_errors_are_classified_not_raised(self):
+        # Protocol-level failures are not OSError; they must still become code 6 without
+        # leaking the peer's bytes, both when opening and while reading the body.
+        errors = (c.http.client.IncompleteRead(b'SECRET_MARKER'), c.http.client.BadStatusLine('SECRET_MARKER'),
+                  c.http.client.RemoteDisconnected('SECRET_MARKER'))
+        for error in errors:
+            for stage in ('open', 'read'):
+                opener = mock.Mock()
+                response = mock.MagicMock()
+                if stage == 'open':
+                    opener.open.side_effect = error
+                else:
+                    response.__enter__.return_value.read1.side_effect = error
+                    opener.open.return_value = response
+                with mock.patch.object(c.urllib.request, 'build_opener', return_value=opener):
+                    self.raises_code(c, 6, c.request_json, 'http://127.0.0.1:1')
+                    self.assertEqual(c.cli(lambda: c.request_json('http://127.0.0.1:1')), 6)
+        self.assertNotIn('SECRET_MARKER', self.error.getvalue())
+
+    def test_http_body_deadline_bounds_a_slow_drip(self):
+        # Each read returns quickly, so the socket timeout never fires; only the deadline stops it.
+        opener = mock.Mock()
+        response = mock.MagicMock()
+        reads = []
+        def drip(_):
+            reads.append(1)
+            # Without the deadline this would never end; fail fast instead of hanging.
+            if len(reads) > 50:
+                raise AssertionError('body read was not bounded by the deadline')
+            return b' '
+        response.__enter__.return_value.read1.side_effect = drip
+        opener.open.return_value = response
+        clock = iter(range(0, 1000))
+        with mock.patch.object(c.urllib.request, 'build_opener', return_value=opener), \
+                mock.patch.object(c.time, 'monotonic', side_effect=lambda: next(clock)):
+            self.raises_code(c, 6, c.request_json, 'http://127.0.0.1:1', timeout=5)
+        self.assertLessEqual(len(reads), 5)
+
+    def test_parse_shows_every_default_in_help(self):
+        parser = argparse.ArgumentParser()
+        parser.add_argument('--seed', type=int, default=0)
+        parser.add_argument('--timeout', type=float, default=7200)
+        parser.add_argument('--url', default='http://127.0.0.1:8188', help='接続先')
+        parser.add_argument('--percent', default='50%')
+        parser.add_argument('--flag', action='store_true')
+        parser.add_argument('--named', default='x', help='既定: 明示済み')
+        with mock.patch.object(sys, 'argv', ['tool']):
+            c.parse(parser)
+        text = parser.format_help()
+        for expected in ('（既定: 0）', '（既定: 7200）', '接続先 （既定: http://127.0.0.1:8188）', '（既定: 50%）'):
+            self.assertIn(expected, text)
+        self.assertEqual(text.count('既定: 明示済み'), 1)
+        self.assertNotIn('（既定: False）', text)
 
     def test_json_nonfinite(self):
         for value in ('NaN', 'Infinity', '-Infinity', '1e999', '{"x": [1e999]}', '{bad'):

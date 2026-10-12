@@ -1,6 +1,7 @@
 """Shared contracts for the local H3 tools (Python 3.11+)."""
 import argparse
 import copy
+import http.client
 import ipaddress
 import json
 import math
@@ -12,6 +13,7 @@ import stat
 import subprocess
 import sys
 import tempfile
+import time
 import urllib.error
 import urllib.parse
 import urllib.request
@@ -97,6 +99,20 @@ def add_paths(parser, names):
                     data_dir='~/.dsh/data/dsh-comfyui')
     for name in names:
         parser.add_argument('--' + name.replace('_', '-'), help='既定: ' + display(defaults[name]))
+
+
+def parse(parser):
+    """Parse after making --help the reference for every default value."""
+    for action in parser._actions:
+        default = action.default
+        # Identity checks: a default of 0 (e.g. --seed) is a real default and must be shown.
+        if default is None or default is False or default is argparse.SUPPRESS or '既定' in (action.help or ''):
+            continue
+        if isinstance(default, (list, tuple)):
+            default = ' '.join(str(v) for v in default)
+        shown = display(default).replace('%', '%%')
+        action.help = (action.help + ' ' if action.help else '') + f'（既定: {shown}）'
+    return parser.parse_args()
 
 
 def paths(args):
@@ -312,10 +328,20 @@ def request_json(url, payload=None, timeout=30):
     data = None if payload is None else json.dumps(payload, allow_nan=False).encode('utf-8')
     request = urllib.request.Request(url, data=data, headers={'Content-Type': 'application/json'} if data else {})
     opener = urllib.request.build_opener(urllib.request.ProxyHandler({}), NoRedirect())
+    # The socket timeout only bounds each read; the deadline bounds the whole exchange.
+    deadline = time.monotonic() + timeout
     try:
         with opener.open(request, timeout=timeout) as response:
-            return json_loads(response.read())
-    except (urllib.error.URLError, OSError, H3Error):
+            chunks = []
+            while True:
+                if time.monotonic() >= deadline:
+                    raise TimeoutError
+                chunk = response.read1(65536)
+                if not chunk:
+                    break
+                chunks.append(chunk)
+            return json_loads(b''.join(chunks))
+    except (urllib.error.URLError, http.client.HTTPException, OSError, H3Error):
         fail(6, 'HTTP', '無応答・拒否・不正 JSON', 'API 起動・指定 URL・要求を確認（応答本文は非表示）')
 
 

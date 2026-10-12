@@ -111,7 +111,7 @@ def main():
     parser.add_argument('--models', nargs='+', choices=('base', 'int8', 'turbo'), default=['base', 'int8', 'turbo'])
     parser.add_argument('--accept-license', action='store_true', help='原文を読んだ本人の同意。エージェントは使用しない')
     parser.add_argument('--test-free-bytes', type=c.nonnegative, help='有効free=min(実測,N)。容量不足の再現用')
-    return acquire(parser.parse_args())
+    return acquire(c.parse(parser))
 
 
 if __name__ == '__main__':

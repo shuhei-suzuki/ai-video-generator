@@ -60,7 +60,7 @@ def main():
     parser.add_argument('--output', default=str(c.MANIFEST), help='既定: リポジトリ config の一覧')
     parser.add_argument('--compare-dir', help='任意: ローカル models/minimax_h3 の全件照合')
     parser.add_argument('--http-timeout', type=c.positive, default=30)
-    return make(parser.parse_args())
+    return make(c.parse(parser))
 
 
 if __name__ == '__main__':

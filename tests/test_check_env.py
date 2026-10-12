@@ -77,7 +77,10 @@ class CheckTests(Case):
         for value, expected in (("export OLLAMA_API_KEY='local'\n", True), ('OLLAMA_API_KEY=""\n', False),
                                 ('OLLAMA_API_KEY=\n', False), ('OLLAMA_API_KEY=$OTHER\n', False),
                                 ('OLLAMA_API_KEY=x\nOLLAMA_API_KEY=y\n', False), ('OTHER=SECRET\n', False),
-                                ('OLLAMA_API_KEY=x # comment\n', True)):
+                                ('OLLAMA_API_KEY=x # comment\n', True),
+                                # A value that is only a comment is empty, as the harness reads it.
+                                ('OLLAMA_API_KEY= # comment\n', False), ('OLLAMA_API_KEY=#comment\n', False),
+                                ('OLLAMA_API_KEY=a#b\n', True)):
             path.write_text('OTHER=SECRET_MARKER\n' + value)
             self.assertEqual(e.env_key_resolved(path, 'OLLAMA_API_KEY'), expected)
         self.assertNotIn('SECRET_MARKER', self.output.getvalue())
@@ -157,6 +160,26 @@ class CheckTests(Case):
             self.assertEqual(lsof.call_args_list[1].kwargs['pids'], {1, 2})
         with mock.patch.object(e, 'listeners', return_value={}):
             self.assertEqual(e.port_diagnostic(('http://127.0.0.1:9000',), table, self.root / 'lsof')[0], 'UNKNOWN')
+
+    def test_port_owner_vanished_not_hidden_by_other_service(self):
+        # The first service owns its port, then disappears before its listeners are listed.
+        # The healthy second service must not turn that into PASS.
+        table = {1: (0, 10, 'python'), 4: (0, 4, 'ollama')}
+        def listeners(lsof, pids=None, port=None):
+            if port:
+                return {1: [('127.0.0.1', port)]} if port == 9000 else {4: [('127.0.0.1', port)]}
+            return {} if pids == {1} else {4: [('127.0.0.1', 9100)]}
+        for urls in (('http://127.0.0.1:9000', 'http://127.0.0.1:9100'),
+                     ('http://127.0.0.1:9100', 'http://127.0.0.1:9000')):
+            with mock.patch.object(e, 'listeners', side_effect=listeners):
+                self.assertEqual(e.port_diagnostic(urls, table, self.root / 'lsof')[0], 'UNKNOWN', urls)
+        # Control: both services confirmed on loopback.
+        def healthy(lsof, pids=None, port=None):
+            owner = 1 if (port == 9000 or pids == {1}) else 4
+            return {owner: [('127.0.0.1', 9000 if owner == 1 else 9100)]}
+        with mock.patch.object(e, 'listeners', side_effect=healthy):
+            self.assertEqual(e.port_diagnostic(('http://127.0.0.1:9000', 'http://127.0.0.1:9100'),
+                                               table, self.root / 'lsof')[0], 'PASS')
 
     def test_harness_exact_name_union_children(self):
         table = {1: (0, 1, '/Applications/DeepSeek Harness'), 2: (0, 2, 'DeepSeek Harness'),

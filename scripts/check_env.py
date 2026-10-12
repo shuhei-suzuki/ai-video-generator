@@ -120,7 +120,9 @@ def env_key_resolved(path, key):
                 valid_tail = end >= 1 and (not value[end + 1:].strip() or value[end + 1:].lstrip().startswith('#'))
                 value = value[1:end] if valid_tail else ''
             else:
-                value = re.split(r'\s+#', value, maxsplit=1)[0].strip()
+                # A comment starts at '#' at the beginning of the value or after whitespace,
+                # so `KEY= # note` is an empty value, not a resolved key.
+                value = re.split(r'(?:^|\s+)#', value, maxsplit=1)[0].strip()
             hits.append(bool(value) and not any(ch in value for ch in ('$','`','\\')) and '\n' not in value)
     return len(hits) == 1 and hits[0]
 
@@ -266,7 +268,12 @@ def port_diagnostic(urls, table, lsof):
         if not owners:
             return ('UNKNOWN', '指定ポートの持ち主不在', 'API 起動・URL・権限を確認')
         pids = descendants(table, owners, same_group=True)
-        records.update(listeners(lsof, pids=pids))
+        found = listeners(lsof, pids=pids)
+        # Each service must be confirmed on its own: a service that vanished between the
+        # two lookups must not be hidden by the other service's healthy listeners.
+        if not any(found.get(pid) for pid in owners):
+            return ('UNKNOWN', '指定ポートの持ち主の待受を確認できない', 'API 起動・URL・権限を確認して再診断')
+        records.update(found)
     return address_diagnostic(records)
 
 
@@ -334,7 +341,7 @@ def main():
     parser.add_argument('--lsof', default='lsof', help='PATH から絶対パス解決')
     parser.add_argument('--ps', default='ps', help='PATH から絶対パス解決')
     parser.add_argument('--http-timeout', type=c.positive, default=5)
-    return diagnose(parser.parse_args())
+    return diagnose(c.parse(parser))
 
 
 if __name__ == '__main__':

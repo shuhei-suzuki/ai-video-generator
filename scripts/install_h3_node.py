@@ -174,7 +174,7 @@ def main():
     c.add_paths(parser, ('instance', 'comfy_root', 'venv', 'models_dir'))
     parser.add_argument('--git', default='git', help='既定: PATH から絶対パス解決')
     parser.add_argument('--command-timeout', type=c.positive, default=1800)
-    return install(parser.parse_args())
+    return install(c.parse(parser))
 
 
 if __name__ == '__main__':

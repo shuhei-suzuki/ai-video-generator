@@ -27,7 +27,13 @@ def wait_history(base, prompt_id, deadline, http_timeout, poll):
         remaining = deadline - time.monotonic()
         if remaining <= 0:
             c.fail(7, '生成', '期限超過（サーバー生成は継続しうる）', '再投入せず履歴・出力を確認')
-        response = c.request_json(base + '/history/' + prompt_id, timeout=min(http_timeout, remaining))
+        try:
+            response = c.request_json(base + '/history/' + prompt_id, timeout=min(http_timeout, remaining))
+        except c.H3Error:
+            # A request cut short by the overall deadline is a timeout, not an API failure.
+            if time.monotonic() >= deadline:
+                c.fail(7, '生成', '期限超過（サーバー生成は継続しうる）', '再投入せず履歴・出力を確認')
+            raise
         if not isinstance(response, dict):
             c.fail(6, '履歴', '応答構造不正', 'API を確認')
         entry = response.get(prompt_id)
@@ -112,7 +118,7 @@ def main():
     parser.add_argument('--timeout', type=c.positive, default=7200)
     parser.add_argument('--poll-interval', type=c.positive, default=2)
     parser.add_argument('--command-timeout', type=c.positive, default=300)
-    return submit(parser.parse_args())
+    return submit(c.parse(parser))
 
 
 if __name__ == '__main__':
