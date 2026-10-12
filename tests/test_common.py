@@ -1,9 +1,12 @@
 import argparse
 import copy
+import io
 import json
 import os
 from pathlib import Path
 import sys
+import threading
+import time
 from unittest import mock
 from support import Case, ROOT, load, fixture_manifest, exec_file, write_json
 
@@ -103,7 +106,7 @@ class CommonTests(Case):
     def test_http_proxy_redirect_and_secret_errors(self):
         opener = mock.Mock()
         response = mock.MagicMock()
-        response.__enter__.return_value.read1.side_effect = [b'{"ok":', b' true}', b'']
+        response.__enter__.return_value.read.return_value = b'{"ok": true}'
         opener.open.return_value = response
         with mock.patch.object(c.urllib.request, 'build_opener', return_value=opener) as build:
             self.assertEqual(c.request_json('http://127.0.0.1:1'), {'ok': True})
@@ -125,31 +128,83 @@ class CommonTests(Case):
                 if stage == 'open':
                     opener.open.side_effect = error
                 else:
-                    response.__enter__.return_value.read1.side_effect = error
+                    response.__enter__.return_value.read.side_effect = error
                     opener.open.return_value = response
                 with mock.patch.object(c.urllib.request, 'build_opener', return_value=opener):
                     self.raises_code(c, 6, c.request_json, 'http://127.0.0.1:1')
                     self.assertEqual(c.cli(lambda: c.request_json('http://127.0.0.1:1')), 6)
         self.assertNotIn('SECRET_MARKER', self.error.getvalue())
 
-    def test_http_body_deadline_bounds_a_slow_drip(self):
-        # Each read returns quickly, so the socket timeout never fires; only the deadline stops it.
+    def real_response(self, raw, delay=0.0, limit=3.0):
+        """A genuine http.client.HTTPResponse over an in-memory socket (no network)."""
+        started = time.monotonic()
+
+        class SlowFile(io.BytesIO):
+            def _wait(self):
+                # Bounded so a missing deadline fails the test instead of hanging it.
+                if delay and time.monotonic() - started < limit:
+                    time.sleep(delay)
+
+            def readline(self, *args):
+                self._wait()
+                return super().readline(*args)
+
+            def read(self, *args):
+                self._wait()
+                return super().read(*args)
+
+            def readinto(self, buffer):
+                self._wait()
+                return super().readinto(buffer)
+
+        class FakeSocket:
+            def makefile(self, *args, **kwargs):
+                return SlowFile(raw)
+
+        response = c.http.client.HTTPResponse(FakeSocket())
+        response.begin()
+        return response
+
+    def request_with(self, response_factory, timeout=5):
         opener = mock.Mock()
-        response = mock.MagicMock()
-        reads = []
-        def drip(_):
-            reads.append(1)
-            # Without the deadline this would never end; fail fast instead of hanging.
-            if len(reads) > 50:
-                raise AssertionError('body read was not bounded by the deadline')
-            return b' '
-        response.__enter__.return_value.read1.side_effect = drip
-        opener.open.return_value = response
-        clock = iter(range(0, 1000))
-        with mock.patch.object(c.urllib.request, 'build_opener', return_value=opener), \
-                mock.patch.object(c.time, 'monotonic', side_effect=lambda: next(clock)):
-            self.raises_code(c, 6, c.request_json, 'http://127.0.0.1:1', timeout=5)
-        self.assertLessEqual(len(reads), 5)
+        opener.open.side_effect = lambda *args, **kwargs: response_factory()
+        with mock.patch.object(c.urllib.request, 'build_opener', return_value=opener):
+            return c.request_json('http://127.0.0.1:1', timeout=timeout)
+
+    def test_http_real_parser_complete_bodies(self):
+        plain = b'HTTP/1.1 200 OK\r\nContent-Length: 18\r\n\r\n{"prompt_id":"id"}'
+        chunked = b'HTTP/1.1 200 OK\r\nTransfer-Encoding: chunked\r\n\r\n8\r\n{"ok": t\r\n4\r\nrue}\r\n0\r\n\r\n'
+        self.assertEqual(self.request_with(lambda: self.real_response(plain)), {'prompt_id': 'id'})
+        self.assertEqual(self.request_with(lambda: self.real_response(chunked)), {'ok': True})
+
+    def test_http_body_shorter_than_content_length_is_a_failure(self):
+        # The received fragment is valid JSON on its own; it must still not be accepted.
+        short = b'HTTP/1.1 200 OK\r\nContent-Length: 100\r\n\r\n{"prompt_id":"id"}'
+        self.raises_code(c, 6, self.request_with, lambda: self.real_response(short))
+        truncated_chunk = b'HTTP/1.1 200 OK\r\nTransfer-Encoding: chunked\r\n\r\n12\r\n{"prompt_id":"id"}'
+        self.raises_code(c, 6, self.request_with, lambda: self.real_response(truncated_chunk))
+
+    def test_http_invalid_json_body_is_an_http_failure(self):
+        # A complete response that is not JSON is an API failure (6), not an input error (2).
+        for body in (b'<html>SECRET_MARKER</html>', b'NaN', b''):
+            raw = b'HTTP/1.1 200 OK\r\nContent-Length: ' + str(len(body)).encode() + b'\r\n\r\n' + body
+            self.raises_code(c, 6, self.request_with, lambda raw=raw: self.real_response(raw))
+            self.assertEqual(c.cli(lambda raw=raw: self.request_with(lambda: self.real_response(raw))), 6)
+        self.assertNotIn('SECRET_MARKER', self.error.getvalue())
+
+    def test_http_deadline_bounds_reads_inside_the_chunk_parser(self):
+        # Every low-level read succeeds after a short pause, so no socket timeout fires and the
+        # time is spent inside the chunk parser; only the absolute deadline can stop the wait.
+        chunked = b'HTTP/1.1 200 OK\r\nTransfer-Encoding: chunked\r\n\r\n' + b'1\r\n \r\n' * 200 + b'0\r\n\r\n'
+        started = time.monotonic()
+        self.raises_code(c, 6, self.request_with, lambda: self.real_response(chunked, delay=0.05), timeout=0.2)
+        self.assertLess(time.monotonic() - started, 1.5)
+        # A blocked connection attempt is bounded the same way.
+        release = threading.Event()
+        self.addCleanup(release.set)
+        started = time.monotonic()
+        self.raises_code(c, 6, self.request_with, lambda: release.wait(3) and None, timeout=0.2)
+        self.assertLess(time.monotonic() - started, 1.5)
 
     def test_parse_shows_every_default_in_help(self):
         parser = argparse.ArgumentParser()

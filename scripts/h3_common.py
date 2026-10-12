@@ -13,7 +13,7 @@ import stat
 import subprocess
 import sys
 import tempfile
-import time
+import threading
 import urllib.error
 import urllib.parse
 import urllib.request
@@ -368,20 +368,32 @@ def request_json(url, payload=None, timeout=30):
     data = None if payload is None else json.dumps(payload, allow_nan=False).encode('utf-8')
     request = urllib.request.Request(url, data=data, headers={'Content-Type': 'application/json'} if data else {})
     opener = urllib.request.build_opener(urllib.request.ProxyHandler({}), NoRedirect())
-    # The socket timeout only bounds each read; the deadline bounds the whole exchange.
-    deadline = time.monotonic() + timeout
+    outcome = {}
+
+    def exchange():
+        # read() keeps the HTTP layer's own integrity checks (a body shorter than
+        # Content-Length raises IncompleteRead); read1() would return the fragment.
+        try:
+            with opener.open(request, timeout=timeout) as response:
+                outcome['body'] = response.read()
+        except BaseException as exc:  # handed to the calling thread below
+            outcome['error'] = exc
+
+    # The socket timeout only bounds each recv, including those inside chunk parsing.
+    # Waiting on a worker bounds the whole exchange; an abandoned daemon worker ends
+    # with its socket timeout or with the process.
+    worker = threading.Thread(target=exchange, daemon=True)
+    worker.start()
+    worker.join(timeout)
+    error = outcome.get('error')
+    transport = (urllib.error.URLError, http.client.HTTPException, OSError)
+    if worker.is_alive() or isinstance(error, transport):
+        fail(6, 'HTTP', '無応答・拒否・不正 JSON', 'API 起動・指定 URL・要求を確認（応答本文は非表示）')
+    if error is not None:
+        raise error
     try:
-        with opener.open(request, timeout=timeout) as response:
-            chunks = []
-            while True:
-                if time.monotonic() >= deadline:
-                    raise TimeoutError
-                chunk = response.read1(65536)
-                if not chunk:
-                    break
-                chunks.append(chunk)
-            return json_loads(b''.join(chunks))
-    except (urllib.error.URLError, http.client.HTTPException, OSError, H3Error):
+        return json_loads(outcome['body'])
+    except H3Error:
         fail(6, 'HTTP', '無応答・拒否・不正 JSON', 'API 起動・指定 URL・要求を確認（応答本文は非表示）')
 
 
