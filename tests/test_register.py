@@ -99,21 +99,29 @@ class RegisterTests(Case):
         profile = Path.home() / '.dsh/profiles/desktop'
         write_json(profile / 'cordis.patch.yml', {'fixture': True})
         write_json(profile / 'dsh-comfyui/workflows.json', [])
+
+        def snapshot():
+            result = {}
+            for p in [profile, *profile.rglob('*')]:
+                content = p.read_bytes() if p.is_file() else None
+                info = p.stat()
+                result[p.relative_to(profile)] = (content, info.st_mode, info.st_size,
+                                                  info.st_mtime_ns, info.st_ino)
+            return result
+
         for link in (allowed, allowed.parent):
             with self.subTest(link=link.name):
                 link.parent.mkdir(parents=True, exist_ok=True)
                 link.symlink_to(profile, target_is_directory=True)
                 try:
-                    before = {p.relative_to(profile): (p.read_bytes() if p.is_file() else None, p.stat())
-                              for p in [profile, *profile.rglob('*')]}
+                    before = snapshot()
                     args = argparse.Namespace(data_dir=str(allowed), ps=str(exec_file(self.root / 'ps')),
                                               harness_process='fixture')
                     with mock.patch.object(c, 'command', return_value=argparse.Namespace(stdout='')) as command, mock.patch.object(c, 'atomic_json') as atomic:
                         self.raises_code(c, 2, r.register, args)
                         command.assert_not_called()
                         atomic.assert_not_called()
-                    after = {p.relative_to(profile): (p.read_bytes() if p.is_file() else None, p.stat())
-                             for p in [profile, *profile.rglob('*')]}
+                    after = snapshot()
                     self.assertEqual(after, before)
                     self.assertTrue(link.is_symlink())
                 finally:

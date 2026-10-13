@@ -168,7 +168,7 @@ JSON の非有限数・不正型は拒否する。プロンプトはデータと
 ComfyUI/Ollama は `http` または `https`、host は IP リテラルの127/8または `::1` のみ（localhost は使わず DNS を避ける）、port は1〜65535。userinfo/query/fragment を拒否、ComfyUI は空/root パス、Ollama は空/root または `/v1` のみ。ループバック HTTP は urllib の `ProxyHandler({})` でシステムのプロキシ設定を使わず、redirect も拒否する。別ポートは許す。
 外部接続は固定 GitHub repo（`github.com`）、固定 HF repo の標準転送経路、明示 PyPI index（`pypi.org`・`files.pythonhosted.org`）を使い、TLS を検証する。HF API/取得のエンドポイントは `https://huggingface.co` に固定し、`HF_ENDPOINT` を継承しない。標準 hub クライアントの配布経路に独自のホスト許可リストやリダイレクト検査を追加しない。
 hub の初期化前に隔離した実行環境で暗黙トークンを無効に固定し、取得には `token=False` を指定する。manifest 再生成の HF API にもトークンを送らない。固定リビジョンと取得後のサイズ照合を用いるが、存在・サイズ一致は暗号学的な完全性保証ではない。D-6 は対象キーの非空存在だけを見る。どの値も表示・変更せず、対象外の値を取得しない。設定例に実キーを入れない。
-`~/.dsh` の永続ファイル書込みは workflows.json だけで、register の data-dir 作成も許す。全 CLI の実体解決済み書込先にこの制限を適用し、register の許可先以外は引数による迂回も拒否する。同じ親の一時ファイルは成功/失敗とも残さない。`--data-dir` が `~/.dsh` 内ならライブラリ用の親だけを許し、profile/env 配下を拒否する。許可先 ~/.dsh/data/dsh-comfyui またはその親 ~/.dsh/data がシンボリックリンクなら、基準側の実体解決前に非変更2で拒否する。workflows.json 自体のリンク拒否も維持する。外の検証用配置先は許可する。check/verify のライブラリ読取もリンク・不正 JSON・対象名重複を拒否し、不正を未登録扱いで代替しない。
+`~/.dsh` の永続ファイル書込みは workflows.json だけで、register の data-dir 作成も許す。全 CLI の実体解決済み書込先にこの制限を適用し、register の許可先以外は引数による迂回も拒否する。同じ親の一時ファイルは成功/失敗とも残さない。`--data-dir` が `~/.dsh` 内ならライブラリ用の親だけを許し、profile/env 配下を拒否する。許可先 ~/.dsh/data/dsh-comfyui またはその親 ~/.dsh/data がシンボリックリンクなら、基準側の実体解決前に非変更2で拒否する。workflows.json 自体のリンク拒否も維持する。外の検証用配置先は許可する。ただし `~/.dsh/data` または `~/.dsh/data/dsh-comfyui` がリンクの環境では、外の配置先への登録も拒否する（安全側）。check/verify のライブラリ読取もリンク・不正 JSON・対象名重複を拒否し、不正を未登録扱いで代替しない。
 標準経路の6項目制限は `comfyui_run` の任意投入を遮断しない。ffmpeg_path は任意実行物を受け得るため、README に外部公開禁止、「ComfyUI を CORS 許可や `--listen` 付きで起動しない」、未調査のツール承認/無効化は利用者判断、第三者の文章・ファイルをそのまま実行させない注意を記す。
 
 ## 影響範囲分析

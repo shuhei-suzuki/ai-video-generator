@@ -2,9 +2,18 @@
 
 ## 読み方・対応
 
-要件は [要件書](../requirements/issue-1-requirements.md)、決定は [設計書](../design/issue-1-design.md)、現在の契約は [architecture](../design/master/architecture.md) / [operations](../design/master/operations.md) / [security](../design/master/security.md) を参照する。提供元は2026-10-12〜13の対象機に関する orchestrator の実機確認事実である。原ログ・動画・個人パスは収録しない。終了コードや日時・prompt_id が提供されない場合は未提供と記し、推測で補わない。手作業・試作の記録と、コミット b38c0cb・b7e51f5・a8d0ade のスクリプト実行結果を分ける。後続の未コミット差分の実機成功とは読み替えない。
+要件は [要件書](../requirements/issue-1-requirements.md)、決定は [設計書](../design/issue-1-design.md)、現在の契約は [architecture](../design/master/architecture.md) / [operations](../design/master/operations.md) / [security](../design/master/security.md) を参照する。提供元は2026-10-12〜13の対象機に関する orchestrator の実機確認事実である。原ログ・動画・個人パスは収録しない。終了コードや日時・prompt_id が提供されない場合は未提供と記し、推測で補わない。手作業・試作の記録と、コミット b38c0cb・b7e51f5・a8d0ade・fbe640a のスクリプト実行結果を分ける。fc87081 の request_json を使う実機再実行の成功とは読み替えない。
 
 各レコードは ID / FR・AC・D / 成果物 / 要件節 / Issue設計節 / マスター節 / 日付・時刻 / 固定版・条件 / 開始状態 / 状態3区分 / 手順 / 期待・実際 / 終了コード / 証跡 / 対処 / 未確認範囲を持つ。クリーンはその導入対象と取得途中データが存在しない開始状態である。
+
+| コミット | 対応 |
+| --- | --- |
+| b38c0cb | 実装 |
+| 22e4ed7 | 実装レビュー round 1 の C1-01〜C1-06 への修正 |
+| b7e51f5 | セキュリティ・契約レビュー round 1 への修正と実機検証結果の記録 |
+| a8d0ade | C2-01・C2-02 への修正（HTTP 本文の完全性検査の維持と交換全体の期限） |
+| fbe640a | セキュリティ・契約レビュー round 2 への修正（チャット例の検証区分、期限案内 1800000 / 3600000、許可先リンクの拒否、履歴不在の文言） |
+| fc87081 | C3-01 への修正（ワーカーの終了を確認してから結果を読む） |
 
 | FR / AC / D | 成果物 | 要件節 | Issue設計節 | マスター節 |
 | --- | --- | --- | --- | --- |
@@ -171,7 +180,7 @@ AC-3 の容量不足注入は「必要量の上書き」から **空き容量側
 | LIVE-DIRECT-5S / FR-6 / AC-6 | submit / AC-6 / submit / operations 保存 | 2026-10-13、a8d0ade、導入済みComfyUI / 既存環境で検証。--width 768 --height 448 --seconds 5 --steps 9 --seed 42 --timeout 3600、promptはワークフロー既定 | 0、prompt_id=11d9178a-8f2d-4a8d-8b69-73614651064b、完了551.8秒（ComfyUI計測551.32秒）。Qwen未ロード・開始時メモリ空き率61%。履歴照合PASS、~/ComfyUI-Shared/output/minimax_h3/ComfyUI_00007_.mp4、H.264768×448/AAC/全フレームデコード成功。ComfyUI仮想環境のPython -I -B、証跡はorchestrator提供結果、時計時刻未提供。未確認: 他条件の再現率 |
 | LIVE-CHAT-VERIFY / FR-7 / AC-7 | submit / FR-7 / submit / operations 保存 | 試作ライブラリでチャット生成済み / 既存環境で検証。--verify-history c014abbc-8117-4a5d-902d-05512c6b7d50 | 0、prompt="A golden retriever puppy running on a sunny beach, waves crashing softly"、64×64・1.0秒・steps5・seed3105209621。登録試作版とリポジトリ双方の固定入力一致、ComfyUI_00003_.mp4検査PASS |
 | LIVE-CHAT / FR-4・FR-7 / AC-4・AC-7 | register・submit・設定例 / FR-7 / register・submit / architecture フロー | リポジトリ版の項目を登録してチャット生成 / 未検証 | 理由: 実機ライブラリには同名の試作版がありregisterは5で拒否した。本人が試作版をパネルで削除して登録し直した後に実施する。試作版チャットの履歴照合成功とは区別する |
-| LIVE-REGISTER / FR-7 / AC-7 | register / FR-7 / register / operations 登録 | 空のtempfileライブラリ / クリーン状態で検証。1回目→2回目 | 1回目登録0（Harness起動中警告）、2回目変更なし0、workflows.jsonのSHA-256は両回同一。b7e51f5の説明文と実用既定値の登録は追加記録参照。後続の期限案内変更は実機未実施 |
+| LIVE-REGISTER / FR-7 / AC-7 | register / FR-7 / register / operations 登録 | 空のtempfileライブラリ / クリーン状態で検証。1回目→2回目 | 1回目登録0（Harness起動中警告）、2回目変更なし0、workflows.jsonのSHA-256は両回同一。b7e51f5の説明文と実用既定値の登録は追加記録参照。fbe640a の期限案内を含む登録の実機結果は追加記録参照 |
 | LIVE-CHAT-REREGISTER / FR-7 / AC-7・D-4 | register・check / 冪等性・FR-7 / register・check / operations 登録 | 試作同名項目のある実機ライブラリ / 既存環境で検証。引数なしregisterとcheck | registerは同名別内容（原本保持）5、ライブラリ非変更。checkのD-4はPASS（固定入力一致）。この登録項目はリポジトリ版の同内容ではないため、同内容0を実機ライブラリで確認したとは扱わない |
 | LIVE-MEMORY / FR-8 / AC-12 | README・本記録 / メモリ / 検証記録 / operations 生成 | Qwen稼働と15秒生成 / 既存環境で検証 | MEMORY-01とCHAT-15Sの実測を参照。15秒動画は48分、H.264448×768・361フレーム・15.04秒、AACステレオ、全フレームデコード成功、生成中空き率41〜44%。測定時計時刻は未提供 |
 | LIVE-ASYNC / FR-7 / AC-7 | README / FR-7 / register・submit / architecture フロー | async実行 / 未検証 | 理由: 今回の構成でasync実行を行っていない。標準はsync、未検証を成功扱いしない |
@@ -184,14 +193,14 @@ S1-01 の修正前実機確認: writable は ~/.dsh/.env を拒否する一方�
 
 ### スクリプトの実機再実行（追加、2026-10-13）
 
-提供元は orchestrator。対象機・固定サービス版は HOST-01 と同じ、ComfyUI 仮想環境の Python `-I -B` を使う。開始状態は導入済みの既存環境で、空の一時ライブラリと依存解決用の空の仮想環境だけをクリーン状態とする。時計時刻は未提供。以下は指定コミットの実行結果であり、後続の未コミット差分の実機検証ではない。
+提供元は orchestrator。対象機・固定サービス版は HOST-01 と同じ、ComfyUI 仮想環境の Python `-I -B` を使う。開始状態は導入済みの既存環境で、空の一時ライブラリと依存解決用の空の仮想環境だけをクリーン状態とする。時計時刻は未提供。以下は指定コミットの実行結果であり、fc87081 の request_json を使う実機再実行の検証ではない。
 
 | ID / FR・AC・D | 対象 / 開始状態・手順 | 実際・終了コード / 未確認範囲 |
 | --- | --- | --- |
 | LIVE-DIAGNOSTIC-RECHECK / FR-5 / AC-5・D-1〜D-9 | b7e51f5 と a8d0ade / 既存環境で検証。check_env.py 引数なし | 両コミットとも全PASS・0。b7e51f5はbase66/int8 13/turbo57件すべて完了と要約表示 |
 | LIVE-DOWNLOAD-RECHECK / FR-3 / AC-3・D-3 | b7e51f5 / 3モデル既存、download_h3_models.py 引数なし | すべて完了済み・変更なし、0。新規取得ではない。空の配置先へのTurbo取得はb38c0cbのLIVE-TURBO参照 |
 | LIVE-INSTALL-RECHECK / FR-3 / AC-3 | b7e51f5 / 導入済み環境、install_h3_node.py 引数なし。事前pip check・wheel限定の版 | 既存版不変 / pip check PASS、追加配布物なし、0。ノード無しからの新規CLI導入は未確認 |
-| LIVE-REGISTER-RECHECK / FR-7 / AC-7 | b7e51f5 / 空の一時配置先、register_dsh_workflow.py --data-dir <空の一時ディレクトリ> を2回 | 初回登録0、2回目変更なし0。実用既定値・当該コミットの説明文での登録。後続の期限案内変更は未確認 |
+| LIVE-REGISTER-RECHECK / FR-7 / AC-7 | b7e51f5 / 空の一時配置先、register_dsh_workflow.py --data-dir <空の一時ディレクトリ> を2回 | 初回登録0、2回目変更なし0。実用既定値・当該コミットの説明文での登録。fbe640a の期限案内を含む登録の実機結果は追加記録参照 |
 | LIVE-DIRECT-SMOKE-RECHECK / FR-6 / AC-6・AC-11 | b7e51f5 / 稼働ComfyUI、submit_h3.py --seed 7。64×64・1秒・steps5、promptはワークフロー既定 | 0、prompt_id=a78027a3-00d6-4c8b-a327-9592c719f106、34.6秒。履歴照合PASS: ノード構成・固定入力 / リポジトリのワークフロー / 登録項目なし。新規投入ではライブラリを読まずリポジトリだけと照合。~/ComfyUI-Shared/output/minimax_h3/ComfyUI_00006_.mp4、H.26464×64/AAC/全フレームデコード成功 |
 | LIVE-HISTORY-ABSENT / FR-7 / AC-7 | b7e51f5 / submit_h3.py --verify-history does-not-exist | 履歴に無いID、待たずに2。後続の実行中・待機中の案内文変更は未確認 |
 | LIVE-WRITE-PROTECTION / AC-9・AC-10 | b7e51f5 / 上記S1-01の4パスをwritableで読み取り確認 | 4件とも2で拒否、ファイル非変更。後続の許可先ディレクトリリンク拒否は実機未確認 |
@@ -226,7 +235,7 @@ a8d0ade の外部変異検証は一時コピーを使い、対照実行成功、
 | 手順 | python3 -m unittest discover -s tests -v、要件由来の変異を一時コピーへ1箇所ずつ適用 |
 | 期待・実際 | テストと変異の最終結果は下表へ記録する |
 | 終了コード / 証跡 | 最終実行結果を下表へ記録する。実機成功の代替にはしない |
-| 対処 / 未確認範囲 | 必須故障の修正と再実行 / 実機表の未検証項目、今回の修正差分の独立再レビュー、Python3.11での実行（コードは3.11以上対応） |
+| 対処 / 未確認範囲 | 必須故障の修正と再実行 / 実機表の未検証項目、b38c0cb の独立レビュー（後続のレビュー記録を参照）、Python3.11での実行（コードは3.11以上対応） |
 
 b38c0cb のローカル結果: `python3 -m unittest discover -s tests -v` は84件成功、失敗0・エラー0・スキップ0、終了0（Python3.14.6）。このうち1件は下の20変異を別プロセスの単体テストで検査する。全CLI6本の `-I --help` も成功。PyYAML 不在時は3件のYAMLテストを理由付きスキップする。hubはスタブを使うため不在でもテスト可能で、hub不在/旧版の終了1を別途注入する。
 
@@ -269,14 +278,14 @@ b38c0cb の変異結果: 以下20件すべてで指定テストが失敗する�
 | 手順 | 個人絶対パス・秘密目印・モデル重み・未加工例外表示を点検、manifestの複製内容一致、要件書非変更とgit diffを確認 |
 | 期待・実際 | 個人絶対パス・秘密形式の文字列検索は0件、重み不在。manifestは提供原本とcmpでバイト一致。要件書のgit diffは空、設計書は補足・実機訂正と必要な実装明確化だけ。テストのSECRET目印はスタブ値であり実キーではない |
 | 終了コード / 証跡 | 点検結果を最終報告へ記載。PR/Issue貼付予定テキストはorchestratorが同じ検索を実施 |
-| 対処 / 未確認範囲 | 個人パスは~、秘密は収録しない / PR・Issue・独立レビュー未実施 |
+| 対処 / 未確認範囲 | 個人パスは~、秘密は収録しない / PR・Issue公開操作は未実施。独立レビューの状態は末尾のレビュー記録参照 |
 
-公開ファイル一覧は冒頭の対応表と README、.gitignore、configの3資材、workflow、scriptsの6ファイル、tools/make_manifest.py、tests/support.py・test_common.py・test_download.py・test_install.py・test_check_env.py・test_submit.py・test_register.py・test_manifest_and_docs.py・test_mutations.py、要件書・Issue設計書・マスター3書・本記録である。今回の修正差分と新規 tests/test_review_fixes.py を引き渡す。22e4ed7 は単体91件成功、同コミットの期限・HTTP例外・envコメント・待受・submit配線・helpの9変異すべて検出との結果が提供されている。テスト用一時領域は tempfile の context/cleanup で削除し、変異コピーも終了後不在を確認する。既存worktreeは成果物引渡しのため保持し、commit/push・その後のクリーンアップはorchestratorが担当する。
+公開ファイル一覧は冒頭の対応表と README、.gitignore、configの3資材、workflow、scriptsの6ファイル、tools/make_manifest.py、tests/support.py・test_common.py・test_download.py・test_install.py・test_check_env.py・test_submit.py・test_register.py・test_manifest_and_docs.py・test_mutations.py、要件書・Issue設計書・マスター3書・本記録である。22e4ed7 は C1-01〜C1-06 への修正を含む。tests/test_review_fixes.py は b7e51f5 で追加された。22e4ed7 は単体91件成功、同コミットの期限・HTTP例外・envコメント・待受・submit配線・helpの9変異すべて検出との結果が提供されている。テスト用一時領域は tempfile の context/cleanup で削除し、変異コピーも終了後不在を確認する。
 
 
 ## b7e51f5 に含まれる修正差分のローカル検証（2026-10-13）
 
-開始HEADは22e4ed7、feature/issue-1の未コミット差分を対象とする。ネットワーク・実サービス・実際の ~/.dsh は使わず、偽ホーム/tempfile/mock、単体テストと全6CLIの --help だけで検証する。`python3 -B -m unittest discover -s tests -v` は108件成功、失敗0・エラー0・スキップ0、終了0。追加17テストを含む。大文字小文字違いの保護テストも今回の一時ボリュームでは実行し成功（case-sensitiveのボリュームでは理由付きskip）する。別マウント経路相当はディレクトリリンクと、その別名を保持するresolveスタブでdev/inode比較を検証し、OSのmount操作は行わない。
+対象は 22e4ed7 から b7e51f5 への修正差分である。ネットワーク・実サービス・実際の ~/.dsh は使わず、偽ホーム/tempfile/mock、単体テストと全6CLIの --help だけで検証する。`python3 -B -m unittest discover -s tests -v` は108件成功、失敗0・エラー0・スキップ0、終了0。追加17テストを含む。大文字小文字違いの保護テストも今回の一時ボリュームでは実行し成功（case-sensitiveのボリュームでは理由付きskip）する。別マウント経路相当はディレクトリリンクと、その別名を保持するresolveスタブでdev/inode比較を検証し、OSのmount操作は行わない。
 
 変異は既存20件＋追加33件＝53件すべて検出する。各変異前の同じ対象テストは成功し、1箇所の一時コピー変異後に意図したテストが失敗する。構文エラー・スキップ・ネットワーク失敗は検出として数えない。原本バイト不変と一時コピーの削除を確認し、git diffで意図した修正差分だけが残ることを確認する。22e4ed7のHTTP期限・HTTP例外、envコメント判定、サービス別待受、help既定値、submit配線は変更を巻き戻さず、対応する既存テストも成功する。要件書とワークフローファイルのgit diffは空である。
 
@@ -328,11 +337,11 @@ b38c0cb の変異結果: 以下20件すべてで指定テストが失敗する�
 | 診断verbose引数を捨てる | test_full_diagnostics_api_faults_individual | 対照成功・変異検出 |
 | 追加cacheを必須件数へ混入 | test_model_summary_verbose_and_pass_remedies | 対照成功・変異検出 |
 
-b7e51f5・a8d0adeの実機再実行は追加記録とLIVE-DIRECT-5S参照。Python3.11/3.12、リポジトリ版登録項目によるチャット生成、900000を超えるtimeout_msを指定したチャット実行、別取得元設定下のinstall、asyncは未実施（理由は追加記録）。このローカル記録自体は独立再レビューの証跡ではない。commit/pushは行わない。補助編集スクリプトは削除し、成果物引渡しのworktreeは保持する。
+b7e51f5・a8d0adeの実機再実行は追加記録とLIVE-DIRECT-5S参照。Python3.11/3.12、リポジトリ版登録項目によるチャット生成、900000を超えるtimeout_msを指定したチャット実行、別取得元設定下のinstall、asyncは未実施（理由は追加記録）。このローカル記録自体は独立再レビューの証跡ではない。補助編集スクリプトは削除済み。
 
-## Opus round 2 修正のローカル検証（2026-10-13）
+## fbe640a（セキュリティ・契約レビュー round 2 修正）のローカル検証（2026-10-13）
 
-開始HEADは a8d0ade、feature/issue-1 の未コミット差分が対象。ネットワーク・実サービス・実際の ~/.dsh を使わず、単体テストとテスト内の全6CLIの --help だけを実行する。TMPDIRとtempfileの一時配置先を作業ディレクトリ内に固定し、偽ホーム・mock・一時コピーを使う。単体113件（追加2件・既存テストの補強を含む）は成功、失敗0・エラー0・スキップ0、終了コード0。初回に追加テストのimport漏れとMarkdownへのPython構文検査を検出して修正し、リンク変異が引数不足のERRORではなく拒否欠落のFAILになるようテストを補強した後、全件を再実行した。
+対象は a8d0ade から fbe640a への修正差分である。ネットワーク・実サービス・実際の ~/.dsh を使わず、単体テストとテスト内の全6CLIの --help だけを実行する。TMPDIRとtempfileの一時配置先を作業ディレクトリ内に固定し、偽ホーム・mock・一時コピーを使う。単体113件（追加2件・既存テストの補強を含む）は成功、失敗0・エラー0・スキップ0、終了コード0。初回に追加テストのimport漏れとMarkdownへのPython構文検査を検出して修正し、リンク変異が引数不足のERRORではなく拒否欠落のFAILになるようテストを補強した後、全件を再実行した。
 
 変異は既存53件＋追加13件＝66件すべて検出。追加13件は各対照実行が成功し、各1箇所の変異で意図したテストがFAILになる。Python変異の構文検査を維持し、構文エラー・ネットワーク失敗・スキップは検出に数えない。原実装のバイト不変・変異コピーの削除を検査し、git diffで修正差分だけが残ることを確認する。request_json の本文は a8d0ade と一致し、tests/test_common.py・要件書・workflow のgit diffは空である。
 
@@ -354,4 +363,51 @@ b7e51f5・a8d0adeの実機再実行は追加記録とLIVE-DIRECT-5S参照。Pyth
 
 同型表現の全文検索は、開始HEADの追跡テキストの timeout_ms・旧期限・成功・実機・verified・検証済み・確認済み・未検証・未実施・工程表現・履歴不在の該当行を単位とし、160箇所点検 / 39箇所修正。残りは要件、契約、対象コミットを区別した既存結果、明記済みの未確認範囲である。READMEと全マスターの工程・時点依存の記述も点検する。旧期限値・旧分数の記述は残らず、マスターへの追記は現在の契約だけである。書込先の消費者はmake_manifest/register/download/installの4CLIを点検し、library=Trueの呼出しはregisterの2箇所だけ。既存回帰テストで他CLIの拒否と通常の登録を確認する。
 
-設計書とマスター operations/security は、ツールの期限上限・許可先ディレクトリリンクの非変更拒否・履歴不在の案内を反映する。実機再実行と独立再レビューはこの未コミット差分では未実施。提供されたb7e51f5/a8d0adeの実機結果とは区別する。補助スクリプトと一時検証領域を除去し、引渡し用worktreeと未コミット差分を保持する。commit/pushは行わない。
+設計書とマスター operations/security は、ツールの期限上限・許可先ディレクトリリンクの非変更拒否・履歴不在の案内を反映する。fbe640a の実機再実行とセキュリティ・契約レビュー round 3 の承認は下の追加記録を参照する。b7e51f5/a8d0ade の実機結果とは区別する。補助スクリプトと一時検証領域は除去済み。
+
+## fbe640a の実機再実行（追加、2026-10-13）
+
+提供元は orchestrator。対象機・固定サービス版は HOST-01 と同じ、ComfyUI 仮想環境の Python を `-I -B` で実行した。開始状態は導入済みの既存環境で、空の一時ライブラリだけをクリーン状態とする。時計時刻は未提供。
+
+| ID / FR・AC・D | 対象 / 開始状態・手順 | 実際・終了コード / 未確認範囲 |
+| --- | --- | --- |
+| LIVE-DIAGNOSTIC-FBE640A / FR-5 / AC-5・D-1〜D-9 | fbe640a / 既存環境で検証。check_env.py | D-1〜D-9 すべて PASS、終了コード0 |
+| LIVE-REGISTER-FBE640A / FR-7 / AC-7 | fbe640a / 空の一時配置先でクリーン状態を検証。register_dsh_workflow.py --data-dir <空の一時ディレクトリ> を2回 | 1回目は登録で0、2回目は「変更なし」で0 |
+| LIVE-REGISTER-CONFLICT-FBE640A / FR-7 / AC-7 | fbe640a / 試作版の同名項目がある実機ライブラリ、既存環境で検証。register_dsh_workflow.py 引数なし | 「同名別内容（原本保持）」で5。差分所在を JSON で表示、ライブラリは変更なし |
+
+fc87081 の `scripts/h3_common.py`（`request_json`）を使う実機の再実行は未実施。変更はワーカーの終了を確認してから結果を読む順序だけであり、fbe640a の実機結果とは区別する。
+
+## fc87081 のローカル単体テスト・変異検証（2026-10-13）
+
+orchestrator 提供結果: fc87081 の単体テストは114件成功。C3-01 の修正に対する変異検証は一時コピーで行い、対照実行は成功、以下6件すべて検出した。
+
+| 変異 | 対象テスト | 提供結果 |
+| --- | --- | --- |
+| 結果の読み取りを生存確認より前に戻す | test_http_outcome_is_read_only_after_the_worker_finished | ERROR |
+| 生存確認を外す | test_http_deadline_bounds_reads_inside_the_chunk_parser | ERROR |
+| join の期限を外す | test_http_deadline_bounds_reads_inside_the_chunk_parser | FAIL |
+| read() を read1() に戻す | test_http_body_shorter_than_content_length_is_a_failure | FAIL |
+| HTTP プロトコル例外の分類を外す | test_http_protocol_errors_are_classified_not_raised | ERROR |
+| 不正 JSON 本文の分類を外す | test_http_invalid_json_body_is_an_http_failure | FAIL |
+
+## レビュー記録
+
+Severity は未提供のため推測で補わない。
+
+実装レビュー（Sol）:
+
+| ID | Severity | 状態 |
+| --- | --- | --- |
+| C1-01〜C1-06 | 未提供 | 解消 |
+| C2-01・C2-02 | 未提供 | 解消 |
+| C3-01 | 未提供 | 修正済み（確認レビュー待ち） |
+
+セキュリティ・契約レビュー（Opus）:
+
+round 3 で承認（必須修正ゼロ）。
+
+| ID | Severity | 状態 |
+| --- | --- | --- |
+| S1-01・K1-01・K1-02 | 未提供 | 解消 |
+| K2-01 | 未提供 | 解消 |
+| S3-01・K3-01・K3-02 | 未提供（任意指摘） | 反映済み |
