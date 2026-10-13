@@ -1,0 +1,19 @@
+# 既存項目を保持して手動で追記。Harness は実行中にこの設定を再保存する。
+- id: llm-pi-ai
+  config:
+    providers:
+      ollama:
+        displayName: Ollama (local)
+        api: openai-completions
+        baseURL: http://127.0.0.1:11434/v1
+        apiKeyEnv: OLLAMA_API_KEY
+        models:
+          - id: qwen3.8:27b-mlx
+            name: Qwen3.8 27B (MLX, local)
+            contextWindow: 65536
+            maxTokens: 8192
+            input: [text, image]
+- id: agent-default-model
+  config:
+    provider: ollama
+    model: qwen3.8:27b-mlx

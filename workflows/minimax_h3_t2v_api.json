@@ -1,0 +1,52 @@
+{
+  "1": {
+    "class_type": "MiniMaxH3ModelLoader",
+    "_meta": {"title": "Load MiniMax H3 (MLX)"},
+    "inputs": {
+      "checkpoint_dir": "MiniMax-H3/FL2VA",
+      "transformer_dir": "MiniMax-H3-MLX-Argus-Calibrated-INT8",
+      "text_encoder_dir": "",
+      "turbo_lora_path": "MiniMax-H3-Turbo-v4-step600-EMA-MLX",
+      "low_memory": true,
+      "stream_blocks": true,
+      "stream_block_group_size": 2,
+      "memory_limit_gb": 32.0,
+      "memory_pressure_guard": false,
+      "load_vision": false,
+      "turbo_lora_scale": 1.0,
+      "turbo_lora_alpha": 0.0,
+      "sigma_shift_video": 0.0,
+      "sigma_shift_audio": 0.0,
+      "dense_dequant_profile": "off"
+    }
+  },
+  "2": {
+    "class_type": "MiniMaxH3Generate",
+    "_meta": {"title": "Generate MiniMax H3 Video + Audio"},
+    "inputs": {
+      "pipeline": ["1", 0],
+      "prompt": "A cinematic red panda running through a misty bamboo forest, with rustling bamboo and gentle footsteps",
+      "width": 64,
+      "height": 64,
+      "duration_seconds": 1.0,
+      "steps": 5,
+      "seed": 0,
+      "drop_adaln": true,
+      "block_cache": false,
+      "block_cache_threshold": 0.12,
+      "block_cache_depth": 0.75,
+      "block_cache_max_consecutive": 2,
+      "cache_text_conditioning": false
+    }
+  },
+  "3": {
+    "class_type": "MiniMaxH3SaveVideo",
+    "_meta": {"title": "Save MiniMax H3 MP4"},
+    "inputs": {
+      "result": ["2", 0],
+      "filename_prefix": "minimax_h3/ComfyUI",
+      "crf": 18,
+      "ffmpeg_path": "/opt/homebrew/bin/ffmpeg"
+    }
+  }
+}
